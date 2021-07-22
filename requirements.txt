@@ -1,0 +1,4 @@
+pandas==1.2.5
+numpy==1.21.0
+pyEDFlib==0.1.22
+click==8.0.1
