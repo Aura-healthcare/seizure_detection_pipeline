@@ -55,3 +55,6 @@ def apply_ecg_qc(ecg_data: pd.DataFrame,
     signal_quality = [algo.get_signal_quality(x) for x in signal_subdiv]
     extended_infos = infos + [model_name]
     write_quality_json(signal_quality, extended_infos)
+
+if __name__ == "__main__":
+    apply_ecg_qc()
