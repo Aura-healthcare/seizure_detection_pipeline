@@ -2,3 +2,7 @@ pandas==1.2.5
 numpy==1.21.0
 pyEDFlib==0.1.22
 click==8.0.1
+py-ecg-detectors==1.0.2
+wfdb==3.4.0
+biosppy==0.7.3
+#ecg-qc==1.0b4
