@@ -1,5 +1,4 @@
 import os
-import json
 from typing import List
 
 import click
@@ -34,10 +33,11 @@ def detect_qrs(ecg_data: pd.DataFrame,
         signal, sampling_frequency, method)
     df_detections = ecg_data.copy()
     df_detections = df_detections.iloc[detected_qrs[:-1]]
-    df_detections['frame']=detected_qrs[:-1]
-    df_detections['rr_interval']=rr_intervals
+    df_detections['frame'] = detected_qrs[:-1]
+    df_detections['rr_interval'] = rr_intervals
     df_detections.drop(columns='signal', inplace=True)
     write_detections_csv(df_detections, infos)
+
 
 if __name__ == "__main__":
     detect_qrs()

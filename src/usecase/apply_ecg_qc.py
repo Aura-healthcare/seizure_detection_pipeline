@@ -56,5 +56,6 @@ def apply_ecg_qc(ecg_data: pd.DataFrame,
     extended_infos = infos + [model_name]
     write_quality_json(signal_quality, extended_infos)
 
+
 if __name__ == "__main__":
     apply_ecg_qc()
