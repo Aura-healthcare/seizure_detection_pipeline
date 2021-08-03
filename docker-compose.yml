@@ -1,40 +1,106 @@
-version: '3.8'
-services:
-    postgres:
-        image: postgres:13.3
-        container_name: postgres
-        environment:
-            - POSTGRES_USER=airflow
-            - POSTGRES_PASSWORD=airflow
-            - POSTGRES_DB=airflow
-        logging:
-            options:
-                max-size: 10m
-                max-file: "3"
-        ports:
-            - "5432:5432"
+version: '3.3'
 
-    webserver:
-        image: puckel/docker-airflow:1.10.9
-        container_name: airflow
-        restart: always
-        depends_on:
-            - postgres
-        environment:
-            - LOAD_EX=n
-            - EXECUTOR=Local
-        logging:
-            options:
-                max-size: 10m
-                max-file: "3"
-        volumes:
-            - ./dags:/usr/local/airflow/dags
-            # - ./plugins:/usr/local/airflow/plugins
-        ports:
-            - "8080:8080"
-        command: webserver
-        healthcheck:
-            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
-            interval: 30s
-            timeout: 30s
-            retries: 3
+services:
+
+  influxdb:
+    image: influxdb:1.8
+    container_name: aura-influxdb
+    ports:
+      - '${INFLUXDB_PORT}:8086'
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=${INFLUXDB_DATABASE}
+      - INFLUXDB_ADMIN_USER=${INFLUXDB_USERNAME}
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_PASSWORD}
+
+  postgres:
+    image: postgres:11
+    container_name: aura-postgresql
+    ports:
+      - '${POSTGRES_PORT}:5432'
+    volumes:
+      - postgres-storage:/var/lib/postgresql/data
+      - ./scripts/create_multiple_databases.sh:/docker-entrypoint-initdb.d/create_multiple_databases.sh
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_DATABASE_AIRFLOW},${POSTGRES_DATABASE_GRAFANA}, ${POSTGRES_DATABASE_MLFLOW}
+
+  grafana:
+    image: grafana/grafana:7.3.4
+    container_name: aura-grafana
+    # deploy:
+    #   restart_policy:
+    #     condition: on-failure
+    restart : on-failure
+    ports:
+      - '${GRAFANA_PORT}:3000'
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./conf/provisioning:/etc/grafana/provisioning
+      - ./conf/grafana.ini:/etc/grafana/grafana.ini
+    depends_on:
+      - influxdb
+      - postgres
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=postgres:5432
+      - GF_DATABASE_NAME=${POSTGRES_DATABASE_GRAFANA}
+      - GF_DATABASE_USER=${POSTGRES_USER}
+      - GF_DATABASE_PASSWORD=${POSTGRES_PASSWORD}
+      - GF_INSTALL_PLUGINS=ae3e-plotly-panel # v0.4.0
+  
+  airflow:
+    build:
+      context: ./docker/airflow
+      dockerfile: Dockerfile
+      args:
+        UID: ${AIRFLOW_UID}
+        GID: ${AIRFLOW_GID}
+    container_name: aura-airflow
+    entrypoint: ./scripts/entrypoint.sh
+    # deploy:
+    #   restart_policy:
+    #     condition: on-failure
+    restart : on-failure
+    depends_on:
+      - postgres
+      - grafana
+    environment: 
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DATABASE_AIRFLOW}
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./scripts:/opt/airflow/scripts
+    #   - ./data:/opt/airflow/data
+      - ./output:/opt/airflow/output
+      - ./models:/opt/airflow/models
+      - ./src:/opt/airflow/src
+      - ./requirements.txt:/opt/airflow/requirements.txt
+    ports:
+      - '${AIRFLOW_PORT}:8080'
+
+  mlflow:
+    build: 
+      context: ./docker/mlflow
+      dockerfile: Dockerfile
+    container_name: aura-mlflow
+    depends_on: 
+      - postgres
+    restart: on-failure
+    command: mlflow server --host 0.0.0.0 --backend-store-uri postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE_MLFLOW} --default-artifact-root ./mlruns
+    ports: 
+        - '${MLFLOW_PORT}:5000'
+    volumes: 
+      - ./mlruns:/mlruns
+
+
+volumes:
+  influxdb-storage:
+  grafana-storage:
+  postgres-storage:
