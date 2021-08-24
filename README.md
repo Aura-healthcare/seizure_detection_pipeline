@@ -24,6 +24,9 @@ The pipeline requires these packages to run :
 * biosppy == 0.7.3
 * hrv-analysis == 1.0.4
 * ecg-qc== ???
+* great-expectations == 0.13.25
+* airflow-provider-great-expectations == 0.0.7
+* psycopg2-binary == 2.8.6
 
 You can install them in a virtual environment on your machine via the command : 
 ```sh
@@ -50,8 +53,7 @@ After cloning this repository, you can run these commands :
 |Airflow|8080|
 |Grafana|3000|
 |MLFlow|5000|
-|DVC|???|
-|Great expectations|???|
+|Great expectations (via NGINX)|8082|
 
 
 
@@ -60,8 +62,7 @@ Once the services are up, you can interact with their UI :
 * **Airflow** : [http://localhost:8080](http://localhost:8080)
 * **Grafana** : [http://localhost:3000](http://localhost:3000)
 * **MLFlow** : [http://localhost:5000](http://localhost:5000)
-* **DVC** : [http://localhost:???](http://localhost:???)
-* **Great expectations** : [http://localhost:???](http://localhost:???)
+* **Great expectations** : [http://localhost:8082](http://localhost:8082)
 
 When required, usernames and passwords are *admin*. 
 
