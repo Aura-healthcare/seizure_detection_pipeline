@@ -66,8 +66,12 @@ Once the services are up, you can interact with their UI :
 
 When required, usernames and passwords are *admin*. 
 
-### Executing script separately 
-You can execute each Python script separately by running :
+### Executing script separately
+First export the python path to access the scripts :
+```sh
+    $ export PYTHONPATH=$(pwd)
+```
+You can now execute each Python script separately by running :
 ```sh
     $ python3 <path-to-Python-script> [OPTIONS]
 ```
