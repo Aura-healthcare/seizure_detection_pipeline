@@ -21,8 +21,6 @@ POSTGRES_DATABASE = 'postgres'
 TABLE_NAME = 'noisy_info'
 
 
-@click.command()
-@click.option('--chunk-file', required=True)
 def ecg_qc_statistical_analysis(chunk_file: str):
     record, model = chunk_file.split('.')[0].split('_#_')
     model_split = model.split('_')
@@ -55,5 +53,12 @@ def ecg_qc_statistical_analysis(chunk_file: str):
         POSTGRES_DATABASE, TABLE_NAME, dict_to_insert)
 
 
+@click.command()
+@click.option('--chunk-file', required=True)
+def main(chunk_file: str):
+    ecg_qc_statistical_analysis(chunk_file)
+
+
 if __name__ == "__main__":
-    ecg_qc_statistical_analysis()
+    # TODO : Local call when postgres down ?
+    main()

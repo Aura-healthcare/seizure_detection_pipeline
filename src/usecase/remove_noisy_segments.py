@@ -33,11 +33,6 @@ def remove_noisy_segments_from_df(df_rr_intervals: pd.DataFrame,
     return df_noise_free_rr_intervals
 
 
-@click.command()
-@click.option('--rr-intervals-file', required=True)
-@click.option('--chunk-file', required=True)
-@click.option('--length-chunk', required=True, type=int)
-@click.option('--sampling-frequency', required=True, type=int)
 def remove_noisy_segments(rr_intervals_file: str, chunk_file: str,
                           length_chunk: int, sampling_frequency: int) -> None:
     df_rr_intervals = pd.read_csv(
@@ -53,5 +48,16 @@ def remove_noisy_segments(rr_intervals_file: str, chunk_file: str,
     write_noise_free_detections_csv(df_noise_free_rr_intervals, infos)
 
 
+@click.command()
+@click.option('--rr-intervals-file', required=True)
+@click.option('--chunk-file', required=True)
+@click.option('--length-chunk', required=True, type=int)
+@click.option('--sampling-frequency', required=True, type=int)
+def main(rr_intervals_file: str, chunk_file: str,
+         length_chunk: int, sampling_frequency: int) -> None:
+    remove_noisy_segments(rr_intervals_file, chunk_file,
+                          length_chunk, sampling_frequency)
+
+
 if __name__ == '__main__':
-    remove_noisy_segments()
+    main()

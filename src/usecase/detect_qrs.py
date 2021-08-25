@@ -36,12 +36,6 @@ def input_params_ecg_channel_read() -> dict:
     }
 
 
-@click.command()
-@click.option('--ecg-data', required=False)
-@click.option('--sampling-frequency', required=True, type=int)
-@click.option('--method', required=True, type=click.Choice(METHODS),
-              default=DEFAULT_METHOD)
-@click.option('--infos', required=True, type=list)
 def detect_qrs(ecg_data: pd.DataFrame,
                sampling_frequency: int,
                method: str,
@@ -58,7 +52,20 @@ def detect_qrs(ecg_data: pd.DataFrame,
     write_detections_csv(df_detections, infos)
 
 
+@click.command()
+@click.option('--ecg-data', required=False)
+@click.option('--sampling-frequency', required=True, type=int)
+@click.option('--method', required=True, type=click.Choice(METHODS),
+              default=DEFAULT_METHOD)
+@click.option('--infos', required=True, type=list)
+def main(ecg_data: pd.DataFrame,
+         sampling_frequency: int,
+         method: str,
+         infos: list) -> None:
+    detect_qrs(ecg_data, sampling_frequency, method, infos)
+
+
 if __name__ == "__main__":
     dict_params = input_params_ecg_channel_read()
     _, df_ecg, _, _ = ecg_channel_read(**dict_params)
-    detect_qrs(ecg_data=df_ecg)
+    main(ecg_data=df_ecg)
