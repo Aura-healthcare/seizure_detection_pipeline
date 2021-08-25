@@ -53,7 +53,7 @@ def apply_ecg_qc(ecg_data: pd.DataFrame,
         signal_subdiv[-1] += [0 for j in range(n - m)]
     # Apply ecg_qc on each chunk
     signal_quality = [algo.get_signal_quality(x) for x in signal_subdiv]
-    extended_infos = infos + [model_name]
+    extended_infos = infos + ['#', model_name]
     write_quality_json(signal_quality, extended_infos)
 
 

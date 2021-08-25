@@ -5,6 +5,8 @@ import click
 import pandas as pd
 
 from src.domain.qrs_detector import QRSDetector
+from src.usecase.ecg_channel_read import ecg_channel_read
+
 
 OUTPUT_FOLDER = 'output/qrs'
 METHODS = ['hamilton', 'xqrs', 'gqrs', 'swt', 'engelsee']
@@ -17,8 +19,25 @@ def write_detections_csv(detections: pd.DataFrame, infos: List[str]) -> None:
     detections.to_csv(filename, sep=',', index=True)
 
 
+def input_params_ecg_channel_read() -> dict:
+    patient = input("Parameters of edf file to read\nPatient ?\n")
+    record = input("Record ?\n")
+    segment = input("Segment ?\n")
+    channel_name = input("Channel name ?\n")
+    start_time = input("Start time ?\n")
+    end_time = input("End time ?\n")
+    return {
+        "patient": patient,
+        "record": record,
+        "segment": segment,
+        "channel_name": channel_name,
+        "start_time": start_time,
+        "end_time": end_time
+    }
+
+
 @click.command()
-@click.option('--ecg-data', required=True)
+@click.option('--ecg-data', required=False)
 @click.option('--sampling-frequency', required=True, type=int)
 @click.option('--method', required=True, type=click.Choice(METHODS),
               default=DEFAULT_METHOD)
@@ -40,4 +59,6 @@ def detect_qrs(ecg_data: pd.DataFrame,
 
 
 if __name__ == "__main__":
-    detect_qrs()
+    dict_params = input_params_ecg_channel_read()
+    _, df_ecg, _, _ = ecg_channel_read(**dict_params)
+    detect_qrs(ecg_data=df_ecg)

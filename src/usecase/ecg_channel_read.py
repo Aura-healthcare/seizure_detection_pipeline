@@ -18,13 +18,13 @@ DEFAULT_PATH = '/home/DATA/lateppe/Recherche_ECG/'
 @click.option('--channel-name', required=True)
 @click.option('--start-time', required=True)
 @click.option('--end-time', required=True)
-def ecg_channel_read(data_path: str,
-                     patient: str,
+def ecg_channel_read(patient: str,
                      record: str,
                      segment: str,
                      channel_name: str,
                      start_time: str,
-                     end_time: str) -> \
+                     end_time: str,
+                     data_path: str = DEFAULT_PATH) -> \
                      Tuple[int, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
 
     edfloader = EdfLoader(data_path, patient, record, segment)

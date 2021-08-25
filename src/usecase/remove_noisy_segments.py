@@ -11,9 +11,9 @@ OUTPUT_FOLDER = 'output/noise_free_frames'
 
 
 def write_noise_free_detections_csv(detections: pd.DataFrame,
-                                    infos: List[str]) -> None:
+                                    infos: str) -> None:
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-    filename = os.path.join(OUTPUT_FOLDER, f"{'_'.join(infos)}.csv")
+    filename = os.path.join(OUTPUT_FOLDER, f"{infos}.csv")
     detections.to_csv(filename, sep=',', index=True)
 
 
@@ -49,7 +49,7 @@ def remove_noisy_segments(rr_intervals_file: str, chunk_file: str,
         list_noisy_segments = json.load(f)
     df_noise_free_rr_intervals = remove_noisy_segments_from_df(
         df_rr_intervals, list_noisy_segments, length_chunk, sampling_frequency)
-    infos = rr_intervals_file.split('.')[0]
+    infos = chunk_file.split('.')[0]
     write_noise_free_detections_csv(df_noise_free_rr_intervals, infos)
 
 
