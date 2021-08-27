@@ -3,7 +3,7 @@ import os
 from typing import Tuple
 
 import pandas as pd
-import click
+# import click
 
 from src.infrastructure.edf_loader import EdfLoader
 
@@ -37,31 +37,31 @@ def ecg_channel_read(patient: str,
     return sample_frequency, df_ecg, df_annot, df_seg
 
 
-@click.command()
-@click.option('--data-path', required=True, default=DEFAULT_PATH)
-@click.option('--patient', required=True)
-@click.option('--record', required=True)
-@click.option('--segment', required=True)
-@click.option('--channel-name', required=True)
-@click.option('--start-time', required=True)
-@click.option('--end-time', required=True)
-def main(patient: str,
-         record: str,
-         segment: str,
-         channel_name: str,
-         start_time: str,
-         end_time: str,
-         data_path: str = DEFAULT_PATH) -> \
-         Tuple[int, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    return ecg_channel_read(patient,
-                            record,
-                            segment,
-                            channel_name,
-                            start_time,
-                            end_time,
-                            data_path)
+# @click.command()
+# @click.option('--data-path', required=True, default=DEFAULT_PATH)
+# @click.option('--patient', required=True)
+# @click.option('--record', required=True)
+# @click.option('--segment', required=True)
+# @click.option('--channel-name', required=True)
+# @click.option('--start-time', required=True)
+# @click.option('--end-time', required=True)
+# def main(patient: str,
+#          record: str,
+#          segment: str,
+#          channel_name: str,
+#          start_time: str,
+#          end_time: str,
+#          data_path: str = DEFAULT_PATH) -> \
+#          Tuple[int, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+#     return ecg_channel_read(patient,
+#                             record,
+#                             segment,
+#                             channel_name,
+#                             start_time,
+#                             end_time,
+#                             data_path)
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 # fs, df_ecg, df_annot, df_seg = ecg_channel_read('/home/DATA/lateppe/Recherche_ECG/', 'PAT_2', '3', 's1', "EMG1+EMG1-", "2020-12-14 21:55:00", "2020-12-14 23:05:00")

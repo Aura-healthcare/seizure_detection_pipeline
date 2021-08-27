@@ -11,10 +11,12 @@ OUTPUT_FOLDER = 'output/noise_free_frames'
 
 
 def write_noise_free_detections_csv(detections: pd.DataFrame,
-                                    infos: str) -> None:
+                                    infos: str) -> str:
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-    filename = os.path.join(OUTPUT_FOLDER, f"{infos}.csv")
-    detections.to_csv(filename, sep=',', index=True)
+    filename = f"{infos}.csv"
+    filepath = os.path.join(OUTPUT_FOLDER, filename)
+    detections.to_csv(filepath, sep=',', index=True)
+    return filename
 
 
 def remove_noisy_segments_from_df(df_rr_intervals: pd.DataFrame,
@@ -45,7 +47,8 @@ def remove_noisy_segments(rr_intervals_file: str, chunk_file: str,
     df_noise_free_rr_intervals = remove_noisy_segments_from_df(
         df_rr_intervals, list_noisy_segments, length_chunk, sampling_frequency)
     infos = chunk_file.split('.')[0]
-    write_noise_free_detections_csv(df_noise_free_rr_intervals, infos)
+    filename = write_noise_free_detections_csv(df_noise_free_rr_intervals, infos)
+    return filename
 
 
 @click.command()
@@ -55,8 +58,8 @@ def remove_noisy_segments(rr_intervals_file: str, chunk_file: str,
 @click.option('--sampling-frequency', required=True, type=int)
 def main(rr_intervals_file: str, chunk_file: str,
          length_chunk: int, sampling_frequency: int) -> None:
-    remove_noisy_segments(rr_intervals_file, chunk_file,
-                          length_chunk, sampling_frequency)
+    _ = remove_noisy_segments(rr_intervals_file, chunk_file,
+                              length_chunk, sampling_frequency)
 
 
 if __name__ == '__main__':
