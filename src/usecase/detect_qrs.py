@@ -56,7 +56,7 @@ def detect_qrs(patient: str,
 @click.option('--end-time', required=True)
 @click.option('--method', required=True, type=click.Choice(METHODS),
               default=DEFAULT_METHOD)
-@click.option('--infos', required=True, type=list)
+@click.option('--infos', required=True, multiple=True)
 @click.option('--data-path', required=True, default=DEFAULT_PATH)
 def main(patient: str,
          record: str,

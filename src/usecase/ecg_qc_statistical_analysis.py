@@ -21,7 +21,7 @@ POSTGRES_DATABASE = 'postgres'
 TABLE_NAME = 'noisy_info'
 
 
-def ecg_qc_statistical_analysis(chunk_file: str):
+def ecg_qc_statistical_analysis(chunk_file: str, local_call: bool = False):
     record, model = chunk_file.split('.')[0].split('_#_')
     model_split = model.split('_')
     try:
@@ -36,7 +36,11 @@ def ecg_qc_statistical_analysis(chunk_file: str):
         list_noisy_segments, length_chunk)
     noisy_pourcent = stats.percentage_noisy_segments(list_noisy_segments)
 
-    postgres_client = PostgresClient()
+    if local_call:
+        local_port = os.getenv('POSTGRES_PORT')
+        postgres_client = PostgresClient(host='localhost', port=local_port)
+    else:
+        postgres_client = PostgresClient()
     table_exists = postgres_client.check_if_table_exists(POSTGRES_DATABASE,
                                                          TABLE_NAME)
     if not table_exists:
@@ -56,9 +60,8 @@ def ecg_qc_statistical_analysis(chunk_file: str):
 @click.command()
 @click.option('--chunk-file', required=True)
 def main(chunk_file: str):
-    ecg_qc_statistical_analysis(chunk_file)
+    ecg_qc_statistical_analysis(chunk_file, local_call=True)
 
 
 if __name__ == "__main__":
-    # TODO : Local call when postgres down ?
     main()
