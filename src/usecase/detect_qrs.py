@@ -69,7 +69,7 @@ def main(patient: str,
          data_path: str = DEFAULT_PATH) -> None:
     _ = detect_qrs(
         patient, record, segment, channel_name,
-        start_time, end_time, method, infos, data_path)
+        start_time, end_time, method, list(infos), data_path)
 
 
 if __name__ == "__main__":

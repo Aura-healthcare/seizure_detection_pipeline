@@ -5,7 +5,7 @@ import pandas as pd
 from typing import List
 import click
 
-RR_INTERVALS_FOLDER = 'output/frames'
+RR_INTERVALS_FOLDER = 'output/qrs'
 CHUNKS_FOLDER = 'output/quality'
 OUTPUT_FOLDER = 'output/noise_free_frames'
 

@@ -73,7 +73,7 @@ def apply_ecg_qc(patient: str,
 @click.option('--start-time', required=True)
 @click.option('--end-time', required=True)
 @click.option('--model', required=True, type=click.Choice(MODELS))
-@click.option('--infos', required=True, type=list)
+@click.option('--infos', required=True, multiple=True)
 @click.option('--data-path', required=True, default=DEFAULT_PATH)
 def main(patient: str,
          record: str,
@@ -86,7 +86,7 @@ def main(patient: str,
          data_path: str = DEFAULT_PATH) -> None:
     _ = apply_ecg_qc(
         patient, record, segment, channel_name,
-        start_time, end_time, model, infos, data_path)
+        start_time, end_time, model, list(infos), data_path)
 
 
 if __name__ == "__main__":
