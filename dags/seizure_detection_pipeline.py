@@ -19,7 +19,8 @@ DICT_PARAMS_EDF_FILE = {
     "segment": "s1",
     "channel_name": "emg6+emg6-",
     "start_time": "2020-12-18 13:00:00",
-    "end_time": "2020-12-18 14:30:00"
+    "end_time": "2020-12-18 14:30:00",
+    "data_path": 'data'
 }
 INFOS = list(DICT_PARAMS_EDF_FILE.values())[:4]
 
@@ -89,7 +90,7 @@ def dag_seizure_detection_pipeline():
 
     file_clean_rr_intervals = t_remove_noisy_segment(
         {
-            "rr_interval_file": file_rr_intervals,
+            "rr_intervals_file": file_rr_intervals,
             "chunk_file": file_quality,
             "length_chunk": LENGTH_CHUNK,
             "sampling_frequency": sampling_frequency

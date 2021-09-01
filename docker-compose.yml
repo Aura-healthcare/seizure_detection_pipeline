@@ -78,7 +78,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./scripts:/opt/airflow/scripts
-    #   - ./data:/opt/airflow/data
+      - ${DATA_PATH}:/opt/airflow/data
       - ./output:/opt/airflow/output
       - ./models:/opt/airflow/models
       - ./src:/opt/airflow/src

@@ -15,7 +15,7 @@ ENTRY_NAME_TYPE_DICT = {
     "min_interval": "integer",
     "max_interval": "integer",
     "med_interval": "real",
-    "noisy_pourcent": "real"
+    "noisy_percent": "real"
 }
 POSTGRES_DATABASE = 'postgres'
 TABLE_NAME = 'noisy_info'
