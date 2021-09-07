@@ -1,0 +1,18 @@
+# # config file version
+apiVersion: 1
+
+# notifiers:
+  # - name: teams-iams
+  #   type: teams
+  #   org_name: Total
+  #   is_default: true
+  #   uid: notifier1
+  #   settings:
+  #     url: https://teams.com
+  # - name: email-notifier
+  #   type: email
+  #   org_id: 1
+  #   uid: notifier2
+  #   is_default: true
+  #   settings:
+  #     addresses: ${NOTIFIERS_EMAIL_ADDRESSES}

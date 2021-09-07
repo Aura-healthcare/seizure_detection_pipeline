@@ -1,0 +1,5 @@
+# Ignore everything in this directory
+*
+# Except these files
+!.gitignore
+!.ge_store_backend_id

@@ -1,0 +1,29 @@
+apiVersion: 1
+
+deleteDatasources:
+  - name: aura-influxDB
+    orgId: 1
+
+datasources:
+  - name: aura-influxDB
+    orgId: 1
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    database: hackathon
+    user: admin
+    password: auraadmin
+    editable: true
+  - name: aura-postgres
+    orgId: 1
+    type: postgres
+    url: postgres:5432
+    database: postgres
+    user: postgres
+    secureJsonData:
+      password: postgres
+    jsonData:
+      sslmode: "disable"
+      postgresVersion: 1100
+      timescaledb: false
+    editable: true
