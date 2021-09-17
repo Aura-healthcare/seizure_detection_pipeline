@@ -37,17 +37,6 @@ LENGTH_CHUNK = 2
      concurrency=CONCURRENCY)
 def dag_seizure_detection_pipeline():
 
-    # @task(multiple_outputs=True)
-    # def t_ecg_channel_read(dict_params: dict) -> pd.DataFrame:
-    #     sample_frequency, df_ecg, df_annot, df_seg = \
-    #         ecg_channel_read(**dict_params)
-    #     return {
-    #         "sample_frequency": sample_frequency,
-    #         "df_ecg": df_ecg,
-    #         "df_annot": df_annot,
-    #         "df_seg": df_seg
-    #     }
-
     @task(multiple_outputs=True)
     def t_detect_qrs(dict_params: dict) -> Tuple[int, str]:
         sampling_frequency, filename = detect_qrs(**dict_params)
