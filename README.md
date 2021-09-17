@@ -43,8 +43,9 @@ After cloning this repository, you can run these commands :
 
 ```sh
     $ source setup_env.sh
+    $ docker-compose build
     $ docker-compose up airflow-init
-    $ docker-compose up -d --build
+    $ docker-compose up -d
 ```
 **Warning**: Here are the default ports used by the different services. If one of them is already in use on your machine, change the value of the corresponding environment variables in the *env.sh* file before running the commands above.
 | Service   | Default port |
