@@ -31,6 +31,8 @@ export AIRFLOW_PORT=8080
 export GRAFANA_PORT=3000
 export MLFLOW_PORT=5000
 export GE_PORT=8082
+export REDIS_PORT=6379
+export FLOWER_PORT=5555
 
 # DATA PATH
 export DATA_PATH='/home/DATA/lateppe/Recherche_ECG/'
