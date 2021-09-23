@@ -49,7 +49,7 @@ def apply_ecg_qc(patient: str,
     signal = list(ecg_data['signal'])
     model_path, model_name, length_chunk, is_normalized = parse_model(model)
     algo = ecg_qc.EcgQc(sampling_frequency=sampling_frequency,
-                         model=model_path, normalized=is_normalized)
+                        model=model_path, normalized=is_normalized)
     # Preprocess signal : chunks of length_chunk seconds
     n = length_chunk * sampling_frequency
     signal_subdiv = [signal[i * n:(i + 1) * n]

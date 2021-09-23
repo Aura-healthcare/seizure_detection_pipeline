@@ -8,7 +8,7 @@ from src.domain.qrs_detector import QRSDetector
 from src.usecase.ecg_channel_read import ecg_channel_read
 
 
-OUTPUT_FOLDER = 'output/qrs'
+OUTPUT_FOLDER = 'output/rr_intervals'
 METHODS = ['hamilton', 'xqrs', 'gqrs', 'swt', 'engelsee']
 DEFAULT_METHOD = 'hamilton'
 DEFAULT_PATH = '/home/DATA/lateppe/Recherche_ECG/'
