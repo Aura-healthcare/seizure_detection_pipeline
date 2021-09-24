@@ -39,7 +39,9 @@ You need to have [docker](https://docs.docker.com/get-docker/) and [docker-compo
 ## Getting started
 
 ### Setting up environment and launch docker-compose
-After cloning this repository, you can run these commands :
+After cloning this repository, replace the value of the environment variable ```DATA_PATH``` in the *env.sh* file with the absolute path of the data you are working with.
+
+You can now run these commands :
 
 ```sh
     $ source setup_env.sh
