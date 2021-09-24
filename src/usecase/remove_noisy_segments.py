@@ -37,6 +37,10 @@ def remove_noisy_segments_from_df(df_rr_intervals: pd.DataFrame,
 
 def remove_noisy_segments(rr_intervals_file: str, chunk_file: str,
                           length_chunk: int, sampling_frequency: int) -> str:
+    '''
+    Removes RR-intervals corresponding to noisy segments, and writes the remaining
+    RR-intervals in a csv file.
+    '''
     df_rr_intervals = pd.read_csv(
         os.path.join(RR_INTERVALS_FOLDER, rr_intervals_file),
         sep=',',

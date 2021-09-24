@@ -41,6 +41,10 @@ def get_df_hrv_features(rr_intervals: list) -> pd.DataFrame:
 
 
 def compute_hrvanalysis_features(rr_intervals_file: str) -> str:
+    '''
+    Computes features from RR-intervals (from a csv file),
+    and writes them in another csv file.
+    '''
     df_rr_intervals = pd.read_csv(
         os.path.join(RR_INTERVALS_FOLDER, rr_intervals_file),
         sep=',',

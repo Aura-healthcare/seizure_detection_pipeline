@@ -43,6 +43,9 @@ def apply_ecg_qc(patient: str,
                  model: str,
                  infos: List[str],
                  data_path: str = DEFAULT_PATH) -> str:
+    '''
+    Applies an ECG QC model on a signal, and writes results in a json file.
+    '''
     sampling_frequency, ecg_data, _, _ = ecg_channel_read(
         patient, record, segment, channel_name,
         start_time, end_time, data_path)

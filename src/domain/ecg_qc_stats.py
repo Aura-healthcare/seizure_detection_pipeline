@@ -16,6 +16,9 @@ def length_record(noisy_segments: list, length_chunk: int) -> int:
 
 def noise_free_intervals_stats(noisy_segments: list, length_chunk: int) \
         -> Tuple[Optional[int], Optional[int], Optional[float]]:
+    '''
+    Returns maximum, minimum and median length of noise-free intervals.
+    '''
     if len(noisy_segments) == 0:
         return None, None, None
     else:
