@@ -23,7 +23,7 @@ The pipeline requires these packages to run :
 * wfdb == 3.4.0
 * biosppy == 0.7.3
 * hrv-analysis == 1.0.4
-* ecg-qc== ???
+* ecg-qc == 1.0b5
 * great-expectations == 0.13.25
 * airflow-provider-great-expectations == 0.0.7
 * psycopg2-binary == 2.8.6
