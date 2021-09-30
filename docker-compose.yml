@@ -1,5 +1,39 @@
 version: '3.3'
 
+x-airflow-common:
+  &airflow-common
+  build:
+    context: .
+    dockerfile: ./docker/airflow/Dockerfile
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DATABASE_AIRFLOW}
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DATABASE_AIRFLOW}
+    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0 # redis://username:password@host:port/db
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
+    AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
+    PYTHONPATH: '/opt/airflow'
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./scripts:/opt/airflow/scripts
+    - ${DATA_PATH}:/opt/airflow/data
+    - ./output:/opt/airflow/output
+    - ./models:/opt/airflow/models
+    - ./src:/opt/airflow/src
+    - ./great_expectations:/opt/airflow/great_expectations
+  user: "${AIRFLOW_UID}:0"
+  depends_on:
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+
+
 services:
 
   influxdb:
@@ -25,14 +59,16 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_DATABASE_AIRFLOW},${POSTGRES_DATABASE_GRAFANA}, ${POSTGRES_DATABASE_MLFLOW}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_DATABASE_AIRFLOW},${POSTGRES_DATABASE_GRAFANA},${POSTGRES_DATABASE_MLFLOW}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
 
   grafana:
     image: grafana/grafana:7.3.4
     container_name: aura-grafana
-    # deploy:
-    #   restart_policy:
-    #     condition: on-failure
     restart : on-failure
     ports:
       - '${GRAFANA_PORT}:3000'
@@ -53,39 +89,130 @@ services:
       - GF_DATABASE_PASSWORD=${POSTGRES_PASSWORD}
       - GF_INSTALL_PLUGINS=ae3e-plotly-panel # v0.4.0
   
-  airflow:
-    build:
-      context: ./docker/airflow
-      dockerfile: Dockerfile
-      args:
-        UID: ${AIRFLOW_UID}
-        GID: ${AIRFLOW_GID}
-    container_name: aura-airflow
-    entrypoint: ./scripts/entrypoint.sh
-    # deploy:
-    #   restart_policy:
-    #     condition: on-failure
-    restart : on-failure
-    depends_on:
-      - postgres
-      - grafana
-    environment: 
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DATABASE_AIRFLOW}
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - AIRFLOW__CORE__ENABLE_XCOM_PICKLING=True
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./scripts:/opt/airflow/scripts
-      - ${DATA_PATH}:/opt/airflow/data
-      - ./output:/opt/airflow/output
-      - ./models:/opt/airflow/models
-      - ./src:/opt/airflow/src
-      - ./great_expectations:/opt/airflow/great_expectations
-      - ./requirements.txt:/opt/airflow/requirements.txt
+  redis:
+    image: redis:6.2.5
+    container_name: aura-redis
+    ports:
+      - '${REDIS_PORT}:6379'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+    restart: always
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: aura-airflow-webserver
+    command: webserver
     ports:
       - '${AIRFLOW_PORT}:8080'
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: aura-airflow-scheduler
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  airflow-worker:
+    <<: *airflow-common
+    container_name: aura-airflow-worker
+    command: celery worker
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - 'celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: aura-airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        function ver() {
+          printf "%04d%04d%04d%04d" $${1//./ }
+        }
+        airflow_version=$$(gosu airflow airflow version)
+        airflow_version_comparable=$$(ver $${airflow_version})
+        min_airflow_version=2.1.0
+        min_airlfow_version_comparable=$$(ver $${min_airflow_version})
+        if (( airflow_version_comparable < min_airlfow_version_comparable )); then
+          echo -e "\033[1;31mERROR!!!: Too old Airflow version $${airflow_version}!\e[0m"
+          echo "The minimum Airflow version supported: $${min_airflow_version}. Only use this or higher!"
+          exit 1
+        fi
+        if [[ -z "${AIRFLOW_UID}" ]]; then
+          echo -e "\033[1;31mERROR!!!: AIRFLOW_UID not set!\e[0m"
+          echo "Please follow these instructions to set AIRFLOW_UID and AIRFLOW_GID environment variables:
+            https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html#initializing-environment"
+          exit 1
+        fi
+        one_meg=1048576
+        mem_available=$$(($$(getconf _PHYS_PAGES) * $$(getconf PAGE_SIZE) / one_meg))
+        cpus_available=$$(grep -cE 'cpu[0-9]+' /proc/stat)
+        disk_available=$$(df / | tail -1 | awk '{print $$4}')
+        warning_resources="false"
+        if (( mem_available < 4000 )) ; then
+          echo -e "\033[1;33mWARNING!!!: Not enough memory available for Docker.\e[0m"
+          echo "At least 4GB of memory required. You have $$(numfmt --to iec $$((mem_available * one_meg)))"
+          warning_resources="true"
+        fi
+        if (( cpus_available < 2 )); then
+          echo -e "\033[1;33mWARNING!!!: Not enough CPUS available for Docker.\e[0m"
+          echo "At least 2 CPUs recommended. You have $${cpus_available}"
+          warning_resources="true"
+        fi
+        if (( disk_available < one_meg * 10 )); then
+          echo -e "\033[1;33mWARNING!!!: Not enough Disk space available for Docker.\e[0m"
+          echo "At least 10 GBs recommended. You have $$(numfmt --to iec $$((disk_available * 1024 )))"
+          warning_resources="true"
+        fi
+        if [[ $${warning_resources} == "true" ]]; then
+          echo
+          echo -e "\033[1;33mWARNING!!!: You have not enough resources to run Airflow (see above)!\e[0m"
+          echo "Please follow the instructions to increase amount of resources available:"
+          echo "   https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html#before-you-begin"
+        fi
+        chown -R "${AIRFLOW_UID}:${AIRFLOW_GID}" /sources/{logs,dags}
+        exec /entrypoint airflow version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+    user: "0:0"
+    volumes:
+      - .:/sources
+
+  flower:
+    <<: *airflow-common
+    container_name: aura-flower
+    command: celery flower
+    ports:
+      - '${FLOWER_PORT}:5555'
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
 
   mlflow:
     build: 

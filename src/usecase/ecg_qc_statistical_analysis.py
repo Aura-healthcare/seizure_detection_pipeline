@@ -22,6 +22,10 @@ TABLE_NAME = 'noisy_info'
 
 
 def ecg_qc_statistical_analysis(chunk_file: str, local_call: bool = False):
+    '''
+    Computes statistics about results of an ECG QC model, and writes them in a
+    table in PostgreSQL.
+    '''
     record, model = chunk_file.split('.')[0].split('_#_')
     model_split = model.split('_')
     try:

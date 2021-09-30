@@ -39,11 +39,15 @@ You need to have [docker](https://docs.docker.com/get-docker/) and [docker-compo
 ## Getting started
 
 ### Setting up environment and launch docker-compose
-After cloning this repository, you can run these commands :
+After cloning this repository, replace the value of the environment variable ```DATA_PATH``` in the *env.sh* file with the absolute path of the data you are working with.
+
+You can now run these commands :
 
 ```sh
     $ source setup_env.sh
-    $ docker-compose up -d --build
+    $ docker-compose build
+    $ docker-compose up airflow-init
+    $ docker-compose up -d
 ```
 **Warning**: Here are the default ports used by the different services. If one of them is already in use on your machine, change the value of the corresponding environment variables in the *env.sh* file before running the commands above.
 | Service   | Default port |
@@ -54,6 +58,8 @@ After cloning this repository, you can run these commands :
 |Grafana|3000|
 |MLFlow|5000|
 |Great expectations (via NGINX)|8082|
+|Flower|5555|
+|Redis|6379|
 
 
 
@@ -63,6 +69,7 @@ Once the services are up, you can interact with their UI :
 * **Grafana** : [http://localhost:3000](http://localhost:3000)
 * **MLFlow** : [http://localhost:5000](http://localhost:5000)
 * **Great expectations** : [http://localhost:8082](http://localhost:8082)
+* **Flower** : [http://localhost:5555](http://localhost:5555)
 
 When required, usernames and passwords are *admin*. 
 

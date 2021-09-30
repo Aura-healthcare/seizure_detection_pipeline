@@ -5,9 +5,9 @@ import pandas as pd
 from typing import List
 import click
 
-RR_INTERVALS_FOLDER = 'output/qrs'
+RR_INTERVALS_FOLDER = 'output/rr_intervals'
 CHUNKS_FOLDER = 'output/quality'
-OUTPUT_FOLDER = 'output/noise_free_frames'
+OUTPUT_FOLDER = 'output/clean_rr_intervals'
 
 
 def write_noise_free_detections_csv(detections: pd.DataFrame,
@@ -36,7 +36,11 @@ def remove_noisy_segments_from_df(df_rr_intervals: pd.DataFrame,
 
 
 def remove_noisy_segments(rr_intervals_file: str, chunk_file: str,
-                          length_chunk: int, sampling_frequency: int) -> None:
+                          length_chunk: int, sampling_frequency: int) -> str:
+    '''
+    Removes RR-intervals corresponding to noisy segments, and writes the remaining
+    RR-intervals in a csv file.
+    '''
     df_rr_intervals = pd.read_csv(
         os.path.join(RR_INTERVALS_FOLDER, rr_intervals_file),
         sep=',',

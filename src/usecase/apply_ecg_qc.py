@@ -43,13 +43,16 @@ def apply_ecg_qc(patient: str,
                  model: str,
                  infos: List[str],
                  data_path: str = DEFAULT_PATH) -> str:
+    '''
+    Applies an ECG QC model on a signal, and writes results in a json file.
+    '''
     sampling_frequency, ecg_data, _, _ = ecg_channel_read(
         patient, record, segment, channel_name,
         start_time, end_time, data_path)
     signal = list(ecg_data['signal'])
     model_path, model_name, length_chunk, is_normalized = parse_model(model)
-    algo = ecg_qc.ecg_qc(sampling_frequency=sampling_frequency,
-                         model=model_path, normalized=is_normalized)
+    algo = ecg_qc.EcgQc(sampling_frequency=sampling_frequency,
+                        model=model_path, normalized=is_normalized)
     # Preprocess signal : chunks of length_chunk seconds
     n = length_chunk * sampling_frequency
     signal_subdiv = [signal[i * n:(i + 1) * n]

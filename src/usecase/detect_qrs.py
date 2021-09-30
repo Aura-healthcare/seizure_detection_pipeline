@@ -8,7 +8,7 @@ from src.domain.qrs_detector import QRSDetector
 from src.usecase.ecg_channel_read import ecg_channel_read
 
 
-OUTPUT_FOLDER = 'output/qrs'
+OUTPUT_FOLDER = 'output/rr_intervals'
 METHODS = ['hamilton', 'xqrs', 'gqrs', 'swt', 'engelsee']
 DEFAULT_METHOD = 'hamilton'
 DEFAULT_PATH = '/home/DATA/lateppe/Recherche_ECG/'
@@ -31,6 +31,9 @@ def detect_qrs(patient: str,
                method: str,
                infos: list,
                data_path: str = DEFAULT_PATH) -> Tuple[int, str]:
+    '''
+    Detects QRS on a signal, and writes their frame and RR-intervals in a csv file.
+    '''
     sampling_frequency, ecg_data, _, _ = ecg_channel_read(
         patient, record, segment, channel_name,
         start_time, end_time, data_path)
