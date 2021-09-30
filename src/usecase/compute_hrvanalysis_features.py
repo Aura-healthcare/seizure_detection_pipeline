@@ -1,11 +1,12 @@
-import json
 import os
 
 import click
 import numpy as np
 import pandas as pd
 
-from hrvanalysis import remove_outliers, remove_ectopic_beats, interpolate_nan_values, get_time_domain_features, get_csi_cvi_features, get_sampen, get_poincare_plot_features, get_frequency_domain_features
+from hrvanalysis import remove_outliers, remove_ectopic_beats, \
+    interpolate_nan_values, get_time_domain_features, get_csi_cvi_features, \
+    get_sampen, get_poincare_plot_features, get_frequency_domain_features
 
 SHORT_WINDOW = 10000  # short window lasts 10 seconds - 10 000 milliseconds
 MEDIUM_WINDOW = 60000  # medium window lasts 60 secondes
@@ -39,8 +40,7 @@ FEATURES_KEY_TO_INDEX = {
     'sampen': 25,
     'sd1': 26,
     'sd2': 27,
-    'ratio_sd2_sd1': 28,
-    'label': 29
+    'ratio_sd2_sd1': 28
 }
 
 RR_INTERVALS_FOLDER = 'output/clean_rr_intervals'
@@ -129,67 +129,6 @@ def compute_long_term_features_on_interval(features, i, rr_timestamps, rrs, larg
                 features[i][FEATURES_KEY_TO_INDEX[key]] = frequency_domain_features[key]
 
 
-def compute_labels_on_interval(features, i, background_intervals, seizure_intervals):
-    short_interval_s = SHORT_WINDOW * 0.001
-    interval_range = [[i * short_interval_s, (i+1) * short_interval_s]]
-    intersec_interval_background = intersections(interval_range, background_intervals)
-    intersec_interval_seizure = intersections(interval_range, seizure_intervals)
-
-    sum_background = 0
-    for interval in intersec_interval_background:
-        sum_background += (interval[1] - interval[0])
-
-    sum_seizure = 0
-    for interval in intersec_interval_seizure:
-        sum_seizure += (interval[1] - interval[0])
-
-    ratio_background = sum_background / short_interval_s
-    ratio_seizure = sum_seizure / short_interval_s
-
-    if (ratio_background + ratio_seizure) < 0.9:
-        features[i][FEATURES_KEY_TO_INDEX["label"]] = np.NaN
-
-    else:
-        features[i][FEATURES_KEY_TO_INDEX["label"]] = ratio_seizure
-
-
-def get_annotations_data(annotations_filename):
-    background_intervals = []
-    seizure_intervals = []
-    annotations_data = json.load(open(annotations_filename, 'r'))
-    background_intervals = annotations_data["background"]
-    seizure_intervals = annotations_data["seizure"]
-
-    return background_intervals, seizure_intervals
-
-
-def intersections(a, b):
-    ranges = []
-    i = j = 0
-    while i < len(a) and j < len(b):
-        a_left, a_right = a[i]
-        b_left, b_right = b[j]
-
-        if a_right < b_right:
-            i += 1
-        else:
-            j += 1
-
-        if a_right >= b_left and b_right >= a_left:
-            end_pts = sorted([a_left, a_right, b_left, b_right])
-            middle = [end_pts[1], end_pts[2]]
-            ranges.append(middle)
-
-    ri = 0
-    while ri < len(ranges)-1:
-        if ranges[ri][1] == ranges[ri+1][0]:
-            ranges[ri:ri+2] = [[ranges[ri][0], ranges[ri+1][1]]]
-
-        ri += 1
-
-    return ranges
-
-
 def compute_hrvanalysis_features(rr_intervals_file: str) -> str:
     '''
     Computes features from RR-intervals (from a csv file),
@@ -200,9 +139,35 @@ def compute_hrvanalysis_features(rr_intervals_file: str) -> str:
         sep=',',
         index_col=0
     )
-    rr_intervals = list(df_rr_intervals['rr_interval'])
-    # FAIRE DES CHOSES
-    df_features = get_df_hrv_features(rr_intervals)
+    rr_intervals = np.array(df_rr_intervals['rr_interval'])
+    rr_timestamps = np.cumsum(rr_intervals)
+
+    duration = rr_timestamps[-1] + rr_intervals[-1]
+    n_short_intervals = (int)(duration / SHORT_WINDOW) + 1
+    medium_window_offset = MEDIUM_WINDOW / SHORT_WINDOW
+    large_window_offset = LARGE_WINDOW / SHORT_WINDOW
+
+    features = np.empty([n_short_intervals, len(FEATURES_KEY_TO_INDEX.keys())])
+    features[:] = np.NaN
+
+    # Sequence features computations in ten seconds intervals
+    for i in range(0, n_short_intervals):
+        try:
+            compute_short_term_features_on_interval(features, i, rr_timestamps, rr_intervals)
+        except Exception as e:
+            print("Interval " + str(i) + "- computation issue on short term features " + str(e))
+
+        try:
+            compute_medium_term_features_on_interval(features, i, rr_timestamps, rr_intervals, medium_window_offset)
+        except Exception as e:
+            print("Interval " + str(i) + "- computation issue on medium term features " + str(e))
+
+        try:
+            compute_long_term_features_on_interval(features, i, rr_timestamps, rr_intervals, large_window_offset)
+        except Exception as e:
+            print("Interval " + str(i) + "- computation issue on long term features " + str(e))
+
+    df_features = pd.DataFrame(features, columns=FEATURES_KEY_TO_INDEX.keys())
     infos = rr_intervals_file.split('.')[0]
     filename = write_features_csv(df_features, infos)
     return filename
@@ -216,80 +181,3 @@ def main(rr_intervals_file: str) -> None:
 
 if __name__ == '__main__':
     main()
-
-
-parser = OptionParser()
-parser.add_option("-i", "--input_file", dest="input_filename",
-                  help="input file path")
-parser.add_option("-o", "--output_file", dest="output_filename",
-                  help="output file path")
-parser.add_option("-a", "--annotations_file", dest="annotations_filename",
-                  help="annotations file path")
-parser.add_option("-q", "--qrs_detector", dest="qrs_detector_used",
-                  help="QRS detector used - available: 1/ pan-tompkins, 2/ swt - Stationnary Wavelets tramsform, 3/ XQRS")
-parser.add_option("-v", "--verbose",
-                  action="store_const", const=1, dest="verbose")
-(options, args) = parser.parse_args()
-
-if not options.input_filename.endswith(".json"):
-    raise ValueError("Invalid input filepath")
-    exit()
-
-if not options.output_filename.endswith(".json"):
-    raise ValueError("Invalid output filepath ")
-    exit()
-
-if not options.qrs_detector_used or (options.qrs_detector_used.lower() != "gqrs" and options.qrs_detector_used.lower() != "xqrs" and options.qrs_detector_used.lower() != "hamilton" and options.qrs_detector_used.lower() != "engelsee" and options.qrs_detector_used.lower() != "swt"):
-    raise ValueError("Invalid QRS Detector ")
-    exit()
-
-output_filename = options.output_filename
-input_filename = options.input_filename
-qrs_detector = options.qrs_detector_used.lower()
-annotations_filename = options.annotations_filename
-#annotations_filename = options.annotations_file
-
-try:
-    # Get QRS frames / RR intervals data
-    raw_data = json.load(open(input_filename))
-    background_intervals, seizure_intervals = get_annotations_data(annotations_filename)
-
-    rrs = np.asarray(raw_data[qrs_detector]["rr_intervals"])
-    rr_timestamps = np.cumsum(rrs)
-
-    duration = rr_timestamps[-1] + rrs[-1]
-    n_short_intervals = (int)(duration / SHORT_WINDOW) + 1
-    medium_window_offset = MEDIUM_WINDOW / SHORT_WINDOW
-    large_window_offset = LARGE_WINDOW / SHORT_WINDOW
-
-    features =  np.empty([n_short_intervals, len(FEATURES_KEY_TO_INDEX.keys())])
-    features[:] = np.NaN
-
-    # Sequence features computations in ten seconds intervals
-    for i in range(0, n_short_intervals):
-        try:
-            compute_labels_on_interval(features, i, background_intervals, seizure_intervals)
-        except Exception as e:
-            print("Interval " + str(i) + " - label computation issue - " + str(e))
-
-        try:
-            compute_short_term_features_on_interval(features, i, rr_timestamps, rrs)
-        except Exception as e:
-            print("Interval " + str(i) + "- computation issue on short term features " + str(e))
-
-        try:
-            compute_medium_term_features_on_interval(features, i, rr_timestamps, rrs, medium_window_offset)
-        except Exception as e:
-            print("Interval " + str(i) + "- computation issue on medium term features" + str(e))
-
-        try:
-            compute_long_term_features_on_interval(features, i, rr_timestamps, rrs, medium_window_offset)
-        except Exception as e:
-            print("Interval " + str(i) + "- computation issue on long term features" + str(e))
-
-    keys = [key for key in FEATURES_KEY_TO_INDEX.keys()]
-    data = {"keys": keys,
-            "features": features.tolist()}
-    json.dump(data, open(output_filename, "w"))
-except Exception as e:
-   print(e)
