@@ -1,8 +1,11 @@
 from datetime import datetime
 from typing import Tuple
 
+import pandas as pd
+
 from airflow.decorators import dag, task
 
+from src.usecase.fetch_database import fetch_database
 from src.usecase.detect_qrs import detect_qrs
 from src.usecase.apply_ecg_qc import apply_ecg_qc
 from src.usecase.remove_noisy_segments import remove_noisy_segments
@@ -16,6 +19,7 @@ DEFAULT_ARGS = {'owner': 'airflow'}
 DICT_PARAMS_EDF_FILE = {
     "patient": "PAT_6",
     "record": "77",
+    "file_path": ""
     "segment": "s1",
     "channel_name": "emg6+emg6-",
     "start_time": "2020-12-18 13:00:00",
@@ -37,6 +41,7 @@ LENGTH_CHUNK = 2
      concurrency=CONCURRENCY)
 def dag_seizure_detection_pipeline():
 
+
     @task(multiple_outputs=True)
     def t_detect_qrs(dict_params: dict) -> Tuple[int, str]:
         sampling_frequency, filename = detect_qrs(**dict_params)
@@ -44,6 +49,11 @@ def dag_seizure_detection_pipeline():
             "sampling_frequency": sampling_frequency,
             "filename": filename
         }
+
+    @task(multiple_outputs=True)
+    def t_fetch_database(dict_params: dict) -> Tuple[str, str]:
+        db_list_filename = fetch_database(**dict_params)
+        return db_list_filename
 
     @task()
     def t_apply_ecg_qc(dict_params: dict) -> str:
@@ -59,39 +69,52 @@ def dag_seizure_detection_pipeline():
     def t_ecg_qc_statistical_analysis(dict_params: dict):
         ecg_qc_statistical_analysis(**dict_params)
 
-    return_dict = t_detect_qrs(
+    db_list_filename = t_fetch_database(
         {
-            **DICT_PARAMS_EDF_FILE,
-            "method": DETECT_QRS_METHOD,
-            "infos": INFOS
-        }
-    )
-    sampling_frequency = return_dict["sampling_frequency"]
-    file_rr_intervals = return_dict["filename"]
-
-    file_quality = t_apply_ecg_qc(
-        {
-            **DICT_PARAMS_EDF_FILE,
-            "model": ECG_QC_MODEL,
-            "infos": INFOS
+            "data_folder_path": "data/tuh",
+            "export_folder": "output/db"
         }
     )
 
-    file_clean_rr_intervals = t_remove_noisy_segment(
-        {
-            "rr_intervals_file": file_rr_intervals,
-            "chunk_file": file_quality,
-            "length_chunk": LENGTH_CHUNK,
-            "sampling_frequency": sampling_frequency
-        }
-    )
+    data_list_filename = db_list_filename["data"]
+    annotation_list_filename = db_list_filename["annotations"]
 
-    t_ecg_qc_statistical_analysis(
-        {
-            "chunk_file": file_quality
-        }
+    db = pd.read_csv(data_list_filename)
+    for exam in db:
 
-    )
+    #return_dict = t_detect_qrs(
+    #    {
+    #        **DICT_PARAMS_EDF_FILE,
+    #        "method": DETECT_QRS_METHOD,
+    #        "infos": INFOS
+    #    }
+    #)
+    #sampling_frequency = return_dict["sampling_frequency"]
+    #file_rr_intervals = return_dict["filename"]
+    #
+    #file_quality = t_apply_ecg_qc(
+    #    {
+    #        **DICT_PARAMS_EDF_FILE,
+    #        "model": ECG_QC_MODEL,
+    #        "infos": INFOS
+    #    }
+    #)
+    #
+    #file_clean_rr_intervals = t_remove_noisy_segment(
+    #    {
+    #        "rr_intervals_file": file_rr_intervals,
+    #        "chunk_file": file_quality,
+    #        "length_chunk": LENGTH_CHUNK,
+    #        "sampling_frequency": sampling_frequency
+    #    }
+    #)
+    #
+    #t_ecg_qc_statistical_analysis(
+    #    {
+    #        "chunk_file": file_quality
+    #    }
+    #
+    #)
 
 
 dag_pipeline = dag_seizure_detection_pipeline()

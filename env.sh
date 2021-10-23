@@ -35,4 +35,4 @@ export REDIS_PORT=6379
 export FLOWER_PORT=5555
 
 # DATA PATH
-export DATA_PATH='/home/DATA/lateppe/Recherche_ECG/'
+export DATA_PATH='./data'
