@@ -1,8 +1,6 @@
 from datetime import datetime
 from typing import Tuple
 
-import pandas as pd
-
 from airflow.decorators import dag, task
 
 from src.usecase.fetch_database import fetch_database
@@ -12,14 +10,14 @@ from src.usecase.remove_noisy_segments import remove_noisy_segments
 from src.usecase.ecg_qc_statistical_analysis import ecg_qc_statistical_analysis
 
 START_DATE = datetime(2021, 4, 22)
-CONCURRENCY = 12
+CONCURRENCY = 4
 SCHEDULE_INTERVAL = None
 DEFAULT_ARGS = {'owner': 'airflow'}
 
 DICT_PARAMS_EDF_FILE = {
     "patient": "PAT_6",
     "record": "77",
-    "file_path": ""
+    "file_path": "",
     "segment": "s1",
     "channel_name": "emg6+emg6-",
     "start_time": "2020-12-18 13:00:00",
