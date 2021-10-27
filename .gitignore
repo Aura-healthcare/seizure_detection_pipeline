@@ -134,3 +134,4 @@ dmypy.json
 # Addition locations
 output/db/*csv
 cloud/
+tests/output/
