@@ -1,9 +1,10 @@
-import click
-import pandas as pd
-import subprocess
-import re
-from typing import Tuple
+import argparse
 import os
+import re
+import subprocess
+from typing import Tuple
+
+import pandas as pd
 
 # TUH database example
 TUH_DATA_FILE_PATTERN = "*.edf"
@@ -11,10 +12,13 @@ TUH_ANNOTATIONS_FILE_PATTERN = "*.tse_bi"
 TUH_PATIENT_PATTERN = ".+\\/(.+)_.+_.+\\..+"
 TUH_EXAM_PATTERN = ".+\\/(.+)\\..+"
 TUH_ANNOTATOR_PATTERN = ""
-
 OUTPUT_FOLDER = "output/db"
 
-def write_database(export_folder: str, df_data: pd.DataFrame, df_annotations: pd.DataFrame) -> None:
+
+def write_database(export_folder: str,
+                   df_data: pd.DataFrame,
+                   df_annotations: pd.DataFrame) -> None:
+
     os.makedirs(export_folder, exist_ok=True)
     df_data.to_csv(f'{export_folder}/df_data.csv',
                    index=False, encoding="utf-8")
@@ -31,13 +35,15 @@ def write_database(export_folder: str, df_data: pd.DataFrame, df_annotations: pd
     df_candidates.to_csv(f'{export_folder}/df_candidates.csv',
                          index=False, encoding="utf-8")
 
-def fetch_database(data_folder_path: str,
-         export_folder: str,
-         data_file_pattern: str = TUH_DATA_FILE_PATTERN,
-         patient_pattern: str = TUH_PATIENT_PATTERN,
-         exam_pattern: str = TUH_EXAM_PATTERN,
-         annotations_file_pattern: str = TUH_ANNOTATIONS_FILE_PATTERN,
-         annotator_pattern: str = TUH_ANNOTATOR_PATTERN) -> Tuple[str, str]:
+
+def fetch_database(
+        data_folder_path: str,
+        export_folder: str = OUTPUT_FOLDER,
+        data_file_pattern: str = TUH_DATA_FILE_PATTERN,
+        patient_pattern: str = TUH_PATIENT_PATTERN,
+        exam_pattern: str = TUH_EXAM_PATTERN,
+        annotations_file_pattern: str = TUH_ANNOTATIONS_FILE_PATTERN
+        ) -> Tuple[str, str]:
 
     # Creating pd.DataFrame with edf path/exam_id/patient_id
     df_data = pd.DataFrame(columns=["data_file_path",
@@ -45,12 +51,13 @@ def fetch_database(data_folder_path: str,
                                     "patient_id"])
 
     data_call = subprocess.Popen(('find',
-                                 '-L',
-                                 data_folder_path,
-                                 '-type',
-                                 'f',
-                                 '-iname',
-                                 data_file_pattern), stdout=subprocess.PIPE)
+                                  '-L',
+                                  data_folder_path,
+                                  '-type',
+                                  'f',
+                                  '-iname',
+                                  data_file_pattern),
+                                 stdout=subprocess.PIPE)
 
     for line in iter(data_call.stdout.readline, b""):
         patient_id = ""
@@ -79,12 +86,12 @@ def fetch_database(data_folder_path: str,
                                          '-type',
                                          'f',
                                          '-iname',
-                                         annotations_file_pattern), stdout=subprocess.PIPE)
+                                         annotations_file_pattern),
+                                        stdout=subprocess.PIPE)
 
     for line in iter(annotations_call.stdout.readline, b""):
         patient_id = ""
         exam_id = ""
-        # annotator = ""
 
         patient_str = re.search(patient_pattern, line.decode("utf-8"))
         if patient_str is not None and len(patient_str.groups()) == 1:
@@ -93,10 +100,6 @@ def fetch_database(data_folder_path: str,
         exam_str = re.search(exam_pattern, line.decode("utf-8"))
         if exam_str is not None and len(exam_str.groups()) == 1:
             exam_id = exam_str.group(1)
-
-        # annotator_str = re.search(annotator_pattern, line.decode("utf-8"))
-        # if annotator_str is not None and len(annotator_str.groups()) == 1:
-        #     annotator_id = annotator_str.group(1)
 
         df_annotations = df_annotations.append({
          "data_file_path": line.decode("utf-8").strip(),
@@ -111,26 +114,29 @@ def fetch_database(data_folder_path: str,
             "annotations": f'{export_folder}/df_annotations.csv'}
 
 
-@click.command()
-@click.option('--data-folder-path', required=True)
-@click.option('--export-folder', default=OUTPUT_FOLDER, required=True)
-@click.option('--data-file-pattern', default=TUH_DATA_FILE_PATTERN)
-@click.option('--patient-pattern', default=TUH_PATIENT_PATTERN)
-@click.option('--exam-pattern', default=TUH_EXAM_PATTERN)
-@click.option('--annotations-file-pattern',
-              default=TUH_ANNOTATIONS_FILE_PATTERN)
-@click.option('--annotator-pattern', default=TUH_ANNOTATOR_PATTERN)
-
-def main(data_folder_path: str,
-         export_folder: str,
-         data_file_pattern: str,
-         patient_pattern: str,
-         exam_pattern: str,
-         annotations_file_pattern: str,
-         annotator_pattern: str) -> None:
-    _ = fetch_database(data_folder_path, export_folder, data_file_pattern, patient_pattern, exam_pattern, annotations_file_pattern, annotator_pattern)
-
-
-
 if __name__ == "__main__":
-    main()
+
+    parser = argparse.ArgumentParser(description='CLI parameter input')
+    parser.add_argument('--data-folder-path',
+                        dest='data_folder_path',
+                        required=True)
+    parser.add_argument('--export-folder',
+                        dest='export_folder')
+    parser.add_argument('--data-file-pattern',
+                        dest='data_file_pattern')
+    parser.add_argument('--patient-pattern',
+                        dest='patient_pattern')
+    parser.add_argument('--exam-pattern',
+                        dest='exam_pattern')
+    parser.add_argument('--annotations-file-pattern',
+                        dest='annotations_file_pattern')
+    args = parser.parse_args()
+
+    # Dictionnary with only CLI inputed paramters
+    fetch_database_parameters = {
+        argument[0]: argument[1]
+        for argument
+        in args._get_kwargs()
+        if argument[1] is not None}
+
+    fetch_database(**fetch_database_parameters)
