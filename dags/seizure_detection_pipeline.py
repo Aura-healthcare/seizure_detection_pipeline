@@ -76,19 +76,22 @@ def dag_seizure_detection_pipeline():
         }
     )
 
+
     data_list_filename = db_list_filename["data"]
     annotation_list_filename = db_list_filename["annotations"]
 
-    db = pd.read_csv(data_list_filename)
-    for exam in db:
+    print(db_list_filename)
+    print(data_list_filename)
+    #db = pd.read_csv("output/db/df_data.csv", encoding="utf-8")
 
     #return_dict = t_detect_qrs(
     #    {
-    #        **DICT_PARAMS_EDF_FILE,
-    #        "method": DETECT_QRS_METHOD,
-    #        "infos": INFOS
+    #        "filename": exam["data_file_path"],
+    #        "exam_id": exam["exam_id"],
+    #        "method": DETECT_QRS_METHOD
     #    }
     #)
+
     #sampling_frequency = return_dict["sampling_frequency"]
     #file_rr_intervals = return_dict["filename"]
     #

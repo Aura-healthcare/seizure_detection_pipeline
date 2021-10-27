@@ -9,9 +9,11 @@ class:
 from os.path import join
 
 import pandas as pd
+import re
 from pyedflib import highlevel
 from pyedflib import edfreader
-
+from typing import Tuple
+from datetime import timedelta
 
 class EdfLoader:
     """
@@ -19,18 +21,12 @@ class EdfLoader:
     ...
     Attributes
     ----------
-    patient : str
-        Patient to load
-    record : str
-        Record to load
-    segment : str
-        Segment to load
     edf_file_path : str
         Path of the EDF file to load
     headers : dict
         Headers of the EDF file
     channels : list
-        Channels availiable if EDF file
+        Signal channels available in EDF file
     startdate : pd.DateTime
         Date of the beginning of the record
     sampling_frequency_hz: int
@@ -42,33 +38,54 @@ class EdfLoader:
     """
 
     def __init__(self,
-                 data_path: str,
-                 patient: str,
-                 record: str,
-                 segment: str):
+                 edf_file_path: str):
         """
         Parameters
         ----------
-        data_path : str
-            data path
-        patient : str
-            patient
-        record : str
-            Record to load
-        segment : str
-            Segment to load
+        edf_file_path : str
+            datafile path
         """
-        self.data_path = data_path
-        self.patient = patient
-        self.record = record
-        self.segment = segment
-        self.edf_file_path = join(self.data_path, self.patient,
-                                  f'EEG_{self.record}_{self.segment}.edf')
+        self.edf_file_path = edf_file_path
 
         self.headers = highlevel.read_edf_header(self.edf_file_path)
         self.channels = self.headers['channels']
-        self.startdate = pd.to_datetime(
-            self.headers['startdate']) + pd.Timedelta(hours=1)
+        self.startdate = self.headers['startdate']
+
+    def get_ecg_candidate_channel(self) -> str:
+        ecg_candidate_channel = []
+
+        for channel in self.channels:
+            result = re.match(".*e[ck]g.*", channel.lower())
+            if result is not None:
+                ecg_candidate_channel.append(channel)
+
+        if len(ecg_candidate_channel) == 0:
+            return None
+
+        return ecg_candidate_channel[0]
+
+
+    def get_edf_file_interval(self) -> Tuple[pd.Timestamp, pd.Timestamp]:
+
+        with edfreader.EdfReader(self.edf_file_path) as f:
+            start_datetime = f.getStartdatetime()
+            end_datetime = start_datetime + timedelta(seconds=f.getFileDuration())
+            return pd.Timestamp(start_datetime), pd.Timestamp(end_datetime)
+
+        return None, None
+
+
+    def ecg_channel_read(self,
+                         channel_name: str,
+                         start_time: pd.Timestamp,
+                         end_time: pd.Timestamp) -> \
+                         Tuple[int, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+
+        df_ecg = self.convert_edf_to_dataframe(channel_name, start_time, end_time)
+
+        sample_frequency = self.sampling_frequency_hz
+
+        return sample_frequency, df_ecg
 
     def convert_edf_to_dataframe(self,
                                  channel_name: str,
