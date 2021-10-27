@@ -1,9 +1,12 @@
 import os
 import json
 from typing import Tuple, List
-
+import argparse
 import ecg_qc
 import click
+
+import sys
+sys.path.append('.')
 
 from src.infrastructure.edf_loader import EdfLoader
 
@@ -32,7 +35,8 @@ def write_quality_json(quality: List[int], exam_id: str, model_name:str) -> str:
     return filename
 
 
-def apply_ecg_qc(filename: str,
+def apply_ecg_qc(filename: str, # TO DO RENAME TO filepath
+                 sampling_frequency: int,
                  model: str,
                  exam_id: str) -> str:
     '''
@@ -42,7 +46,10 @@ def apply_ecg_qc(filename: str,
     ecg_channel_name = edfloader.get_ecg_candidate_channel()
     start_time, end_time = edfloader.get_edf_file_interval()
 
-    sampling_frequency, ecg_data = edfloader.ecg_channel_read(ecg_channel_name, start_time, end_time)
+    sampling_frequency, ecg_data = edfloader.ecg_channel_read(
+        ecg_channel_name,
+        start_time,
+        end_time)
     signal = list(ecg_data['signal'])
 
     model_path, model_name, length_chunk, is_normalized = parse_model(model)
@@ -62,15 +69,24 @@ def apply_ecg_qc(filename: str,
     return filename
 
 
-@click.command()
-@click.option('--filename', required=True)
-@click.option('--model', required=True, type=click.Choice(MODELS))
-@click.option('--exam-id', required=True)
-def main(filename: str,
-         model: str,
-         exam_id: str) -> None:
-    _ = apply_ecg_qc(filename, model, exam_id)
-
-
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='CLI parameter input')
+    parser.add_argument('--filename',
+                        dest='filename',
+                        required=True)
+    parser.add_argument('--sampling-frequency',
+                        dest='sampling_frequency',
+                        required=True)
+    parser.add_argument('--model',
+                        dest='model',
+                        required=True,
+                        choices=MODELS)
+    parser.add_argument('--exam-id',
+                        dest='exam_id',
+                        required=True)
+    args = parser.parse_args()
+
+    apply_ecg_qc(args.filename,
+                 args.sampling_frequency,
+                 args.model,
+                 args.exam_id)
