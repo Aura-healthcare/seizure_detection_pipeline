@@ -12,6 +12,25 @@ TUH_PATIENT_PATTERN = ".+\\/(.+)_.+_.+\\..+"
 TUH_EXAM_PATTERN = ".+\\/(.+)\\..+"
 TUH_ANNOTATOR_PATTERN = ""
 
+OUTPUT_FOLDER = "output/db"
+
+def write_database(export_folder: str, df_data: pd.DataFrame, df_annotations: pd.DataFrame) -> None:
+    os.makedirs(export_folder, exist_ok=True)
+    df_data.to_csv(f'{export_folder}/df_data.csv',
+                   index=False, encoding="utf-8")
+    df_annotations.to_csv(f'{export_folder}/df_annotations.csv',
+                          index=False, encoding="utf-8")
+
+    df_data.columns = ['edf_file_path'] + list(df_data.columns[1:])
+    df_annotations.columns = ['annotations_file_path'] + list(
+        df_annotations.columns[1:])
+    df_candidates = df_data.merge(df_annotations,
+                                  how='outer',
+                                  on=['exam_id', 'patient_id'])
+
+    df_candidates.to_csv(f'{export_folder}/df_candidates.csv',
+                         index=False, encoding="utf-8")
+
 def fetch_database(data_folder_path: str,
          export_folder: str,
          data_file_pattern: str = TUH_DATA_FILE_PATTERN,
@@ -85,22 +104,8 @@ def fetch_database(data_folder_path: str,
          "patient_id": patient_id,
          "annotator_id": ""}, ignore_index=True)
 
-    if export_folder is not None:
-        df_data.to_csv(f'{export_folder}/df_data.csv',
-                       index=False)
-        df_annotations.to_csv(f'{export_folder}/df_annotations.csv',
-                              index=False)
+    write_database(export_folder, df_data, df_annotations)
 
-        df_data.columns = ['edf_file_path'] + list(df_data.columns[1:])
-        df_annotations.columns = ['annotations_file_path'] + list(
-            df_annotations.columns[1:])
-        df_candidates = df_data.merge(df_annotations,
-                                      how='outer',
-                                      on=['exam_id', 'patient_id'])
-
-        df_candidates.to_csv(f'{export_folder}/df_candidates.csv',
-                             index=False)
-    print({"candidates": f'{export_folder}/df_candidates.csv', "annotations": f'{export_folder}/df_annotations.csv'})
     return {"candidates": f'{export_folder}/df_candidates.csv',
             "data": f'{export_folder}/df_data.csv',
             "annotations": f'{export_folder}/df_annotations.csv'}
@@ -108,7 +113,7 @@ def fetch_database(data_folder_path: str,
 
 @click.command()
 @click.option('--data-folder-path', required=True)
-@click.option('--export-folder', default=None, required=False)
+@click.option('--export-folder', default=OUTPUT_FOLDER, required=True)
 @click.option('--data-file-pattern', default=TUH_DATA_FILE_PATTERN)
 @click.option('--patient-pattern', default=TUH_PATIENT_PATTERN)
 @click.option('--exam-pattern', default=TUH_EXAM_PATTERN)
