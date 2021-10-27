@@ -5,13 +5,11 @@ from typing import Tuple, List
 import ecg_qc
 import click
 
-from src.usecase.ecg_channel_read import ecg_channel_read
+from src.infrastructure.edf_loader import EdfLoader
 
 MODEL_FOLDER = 'models'
 MODELS = os.listdir(MODEL_FOLDER)
 OUTPUT_FOLDER = 'output/quality'
-DEFAULT_PATH = '/home/DATA/lateppe/Recherche_ECG/'
-
 
 def parse_model(model: str) -> Tuple[str, str, int, bool]:
     model_path = os.path.join(MODEL_FOLDER, model)
@@ -25,31 +23,28 @@ def parse_model(model: str) -> Tuple[str, str, int, bool]:
     return model_path, model_name, length_chunk, is_normalized
 
 
-def write_quality_json(quality: List[int], infos: List[str]) -> str:
+def write_quality_json(quality: List[int], exam_id: str, model_name:str) -> str:
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-    filename = f"{'_'.join(infos)}.json"
+    filename = f"{exam_id}_{model_name}.csv"
     with open(os.path.join(OUTPUT_FOLDER, filename), 'w') \
             as outfile:
         json.dump(quality, outfile)
     return filename
 
 
-def apply_ecg_qc(patient: str,
-                 record: str,
-                 segment: str,
-                 channel_name: str,
-                 start_time: str,
-                 end_time: str,
+def apply_ecg_qc(filename: str,
                  model: str,
-                 infos: List[str],
-                 data_path: str = DEFAULT_PATH) -> str:
+                 exam_id: str) -> str:
     '''
     Applies an ECG QC model on a signal, and writes results in a json file.
     '''
-    sampling_frequency, ecg_data, _, _ = ecg_channel_read(
-        patient, record, segment, channel_name,
-        start_time, end_time, data_path)
+    edfloader = EdfLoader(filename)
+    ecg_channel_name = edfloader.get_ecg_candidate_channel()
+    start_time, end_time = edfloader.get_edf_file_interval()
+
+    sampling_frequency, ecg_data = edfloader.ecg_channel_read(ecg_channel_name, start_time, end_time)
     signal = list(ecg_data['signal'])
+
     model_path, model_name, length_chunk, is_normalized = parse_model(model)
     algo = ecg_qc.EcgQc(sampling_frequency=sampling_frequency,
                         model=model_path, normalized=is_normalized)
@@ -63,33 +58,18 @@ def apply_ecg_qc(patient: str,
         signal_subdiv[-1] += [0 for j in range(n - m)]
     # Apply ecg_qc on each chunk
     signal_quality = [algo.get_signal_quality(x) for x in signal_subdiv]
-    extended_infos = infos + ['#', model_name]
-    filename = write_quality_json(signal_quality, extended_infos)
+    filename = write_quality_json(signal_quality, exam_id, model_name)
     return filename
 
 
 @click.command()
-@click.option('--patient', required=True)
-@click.option('--record', required=True)
-@click.option('--segment', required=True)
-@click.option('--channel-name', required=True)
-@click.option('--start-time', required=True)
-@click.option('--end-time', required=True)
+@click.option('--filename', required=True)
 @click.option('--model', required=True, type=click.Choice(MODELS))
-@click.option('--infos', required=True, multiple=True)
-@click.option('--data-path', required=True, default=DEFAULT_PATH)
-def main(patient: str,
-         record: str,
-         segment: str,
-         channel_name: str,
-         start_time: str,
-         end_time: str,
+@click.option('--exam-id', required=True)
+def main(filename: str,
          model: str,
-         infos: List[str],
-         data_path: str = DEFAULT_PATH) -> None:
-    _ = apply_ecg_qc(
-        patient, record, segment, channel_name,
-        start_time, end_time, model, list(infos), data_path)
+         exam_id: str) -> None:
+    _ = apply_ecg_qc(filename, model, exam_id)
 
 
 if __name__ == "__main__":
