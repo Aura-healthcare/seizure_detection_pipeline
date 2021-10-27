@@ -1,6 +1,6 @@
 import os
 import argparse
-from typing import Tuple
+from typing import Tuple, List
 import sys
 
 import pandas as pd
@@ -16,19 +16,21 @@ DEFAULT_METHOD = 'hamilton'
 
 
 def write_detections_csv(detections: pd.DataFrame,
-                         exam_id: str) -> str:
+                         exam_id: str,
+                         output_folder: str) -> str:
 
-    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    os.makedirs(output_folder, exist_ok=True)
     filename = f"{exam_id}.csv"
-    filepath = os.path.join(OUTPUT_FOLDER, filename)
+    filepath = os.path.join(output_folder, filename)
     detections.to_csv(filepath, sep=',', index=True)
 
-    return filename
+    return filepath #filename
 
 
 def detect_qrs(filename: str,
                method: str,
-               exam_id: str) -> Tuple[int, str]:
+               exam_id: str,
+               output_folder: str) -> Tuple[int, str]:
     '''
     Detects QRS on a signal, and writes their frame and RR-intervals in a csv
     file.
@@ -52,12 +54,13 @@ def detect_qrs(filename: str,
     df_detections['frame'] = detected_qrs[:-1]
     df_detections['rr_interval'] = rr_intervals
     df_detections.drop(columns='signal', inplace=True)
-    filename = write_detections_csv(df_detections, exam_id)
+    filename = write_detections_csv(df_detections, exam_id, output_folder)
 
     return sampling_frequency, filename
 
 
-if __name__ == "__main__":
+def parse_detect_qrs_args(args_to_parse: List[str]):
+
     parser = argparse.ArgumentParser(description='CLI parameter input')
     parser.add_argument('--filename',
                         dest='filename',
@@ -69,7 +72,19 @@ if __name__ == "__main__":
     parser.add_argument('--exam-id',
                         dest='exam_id',
                         required=True)
-    args = parser.parse_args()
+    parser.add_argument('--output-folder',
+                        dest='output_folder',
+                        default=OUTPUT_FOLDER)
+    args = parser.parse_args(args_to_parse)
+    print(args)
+
+    return args
+
+
+if __name__ == "__main__":
+
+    args = parse_detect_qrs_args(sys.argv[1:])
     detect_qrs(args.filename,
                args.method,
-               args.exam_id)
+               args.exam_id,
+               args.output_folder)
