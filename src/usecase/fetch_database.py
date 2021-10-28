@@ -1,10 +1,13 @@
 import argparse
 import os
 import re
+import sys
 import subprocess
-from typing import Tuple
+from typing import Tuple, List
 
 import pandas as pd
+
+from src.usecase.utilities import convert_args_to_dict
 
 # TUH database example
 TUH_DATA_FILE_PATTERN = "*.edf"
@@ -12,18 +15,20 @@ TUH_ANNOTATIONS_FILE_PATTERN = "*.tse_bi"
 TUH_PATIENT_PATTERN = ".+\\/(.+)_.+_.+\\..+"
 TUH_EXAM_PATTERN = ".+\\/(.+)\\..+"
 TUH_ANNOTATOR_PATTERN = ""
-OUTPUT_FOLDER = "output/db"
+EXPORT_FOLDER = "output/db"
 
 
 def write_database(export_folder: str,
                    df_data: pd.DataFrame,
-                   df_annotations: pd.DataFrame) -> None:
+                   df_annotations: pd.DataFrame) -> Tuple[str, str, str]:
 
     os.makedirs(export_folder, exist_ok=True)
-    df_data.to_csv(f'{export_folder}/df_data.csv',
-                   index=False, encoding="utf-8")
-    df_annotations.to_csv(f'{export_folder}/df_annotations.csv',
-                          index=False, encoding="utf-8")
+    data_path = f'{export_folder}/df_data.csv'
+    annotation_path = f'{export_folder}/df_annotations.csv'
+    candidates_path = f'{export_folder}/df_candidates.csv'
+
+    df_data.to_csv(data_path, index=False, encoding="utf-8")
+    df_annotations.to_csv(annotation_path, index=False, encoding="utf-8")
 
     df_data.columns = ['edf_file_path'] + list(df_data.columns[1:])
     df_annotations.columns = ['annotations_file_path'] + list(
@@ -32,18 +37,19 @@ def write_database(export_folder: str,
                                   how='outer',
                                   on=['exam_id', 'patient_id'])
 
-    df_candidates.to_csv(f'{export_folder}/df_candidates.csv',
-                         index=False, encoding="utf-8")
+    df_candidates.to_csv(candidates_path, index=False, encoding="utf-8")
+
+    return data_path, annotation_path, candidates_path
 
 
 def fetch_database(
         data_folder_path: str,
-        export_folder: str = OUTPUT_FOLDER,
+        export_folder: str = EXPORT_FOLDER,
         data_file_pattern: str = TUH_DATA_FILE_PATTERN,
         patient_pattern: str = TUH_PATIENT_PATTERN,
         exam_pattern: str = TUH_EXAM_PATTERN,
         annotations_file_pattern: str = TUH_ANNOTATIONS_FILE_PATTERN
-        ) -> Tuple[str, str]:
+        ) -> Tuple[str, str, str]:
 
     # Creating pd.DataFrame with edf path/exam_id/patient_id
     df_data = pd.DataFrame(columns=["data_file_path",
@@ -107,15 +113,15 @@ def fetch_database(
          "patient_id": patient_id,
          "annotator_id": ""}, ignore_index=True)
 
-    write_database(export_folder, df_data, df_annotations)
+    data_path, annotation_path, candidates_path = write_database(
+        export_folder,
+        df_data,
+        df_annotations)
 
-    return {"candidates": f'{export_folder}/df_candidates.csv',
-            "data": f'{export_folder}/df_data.csv',
-            "annotations": f'{export_folder}/df_annotations.csv'}
+    return data_path, annotation_path, candidates_path
 
 
-if __name__ == "__main__":
-
+def parse_fetch_database_args(args_to_parse: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='CLI parameter input')
     parser.add_argument('--data-folder-path',
                         dest='data_folder_path',
@@ -132,11 +138,11 @@ if __name__ == "__main__":
                         dest='annotations_file_pattern')
     args = parser.parse_args()
 
-    # Dictionnary with only CLI inputed paramters
-    fetch_database_parameters = {
-        argument[0]: argument[1]
-        for argument
-        in args._get_kwargs()
-        if argument[1] is not None}
+    return args
 
-    fetch_database(**fetch_database_parameters)
+
+if __name__ == "__main__":
+
+    args = parse_fetch_database_args(sys.argv[1:])
+    args_dict = convert_args_to_dict(args)
+    fetch_database(**args_dict)
