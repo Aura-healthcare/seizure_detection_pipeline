@@ -3,34 +3,21 @@ import argparse
 from typing import Tuple, List
 import sys
 
-import pandas as pd
 sys.path.append('.')
 
 from src.domain.qrs_detector import QRSDetector
 from src.infrastructure.edf_loader import EdfLoader
-
+from src.usecase.utilities import convert_args_to_dict
 
 OUTPUT_FOLDER = 'output/rr_intervals'
 METHODS = ['hamilton', 'xqrs', 'gqrs', 'swt', 'engelsee']
 DEFAULT_METHOD = 'hamilton'
 
 
-def write_detections_csv(detections: pd.DataFrame,
-                         exam_id: str,
-                         output_folder: str) -> str:
-
-    os.makedirs(output_folder, exist_ok=True)
-    filename = f"{exam_id}.csv"
-    filepath = os.path.join(output_folder, filename)
-    detections.to_csv(filepath, sep=',', index=True)
-
-    return filepath #filename
-
-
 def detect_qrs(filename: str,
                method: str,
                exam_id: str,
-               output_folder: str) -> Tuple[int, str]:
+               output_folder: str = OUTPUT_FOLDER) -> Tuple[int, str]:
     '''
     Detects QRS on a signal, and writes their frame and RR-intervals in a csv
     file.
@@ -54,12 +41,17 @@ def detect_qrs(filename: str,
     df_detections['frame'] = detected_qrs[:-1]
     df_detections['rr_interval'] = rr_intervals
     df_detections.drop(columns='signal', inplace=True)
-    filename = write_detections_csv(df_detections, exam_id, output_folder)
 
-    return sampling_frequency, filename
+    # Export
+    os.makedirs(output_folder, exist_ok=True)
+    filename = f"{exam_id}.csv"
+    filepath = os.path.join(output_folder, filename)
+    df_detections.to_csv(filepath, sep=',', index=True)
+
+    return sampling_frequency, filepath
 
 
-def parse_detect_qrs_args(args_to_parse: List[str]):
+def parse_detect_qrs_args(args_to_parse: List[str]) -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description='CLI parameter input')
     parser.add_argument('--filename',
@@ -73,10 +65,9 @@ def parse_detect_qrs_args(args_to_parse: List[str]):
                         dest='exam_id',
                         required=True)
     parser.add_argument('--output-folder',
-                        dest='output_folder',
-                        default=OUTPUT_FOLDER)
+                        dest='output_folder')
+
     args = parser.parse_args(args_to_parse)
-    print(args)
 
     return args
 
@@ -84,7 +75,5 @@ def parse_detect_qrs_args(args_to_parse: List[str]):
 if __name__ == "__main__":
 
     args = parse_detect_qrs_args(sys.argv[1:])
-    detect_qrs(args.filename,
-               args.method,
-               args.exam_id,
-               args.output_folder)
+    args_dict = convert_args_to_dict(args)
+    detect_qrs(**args_dict)
