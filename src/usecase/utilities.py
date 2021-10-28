@@ -1,5 +1,6 @@
 import argparse
 
+
 def convert_args_to_dict(args: argparse.Namespace) -> dict:
     '''
     From an argparse Namespace, create a dictionnary with only inputed CLI
