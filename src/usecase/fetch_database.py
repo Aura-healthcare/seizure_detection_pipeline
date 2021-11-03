@@ -136,7 +136,7 @@ def parse_fetch_database_args(args_to_parse: List[str]) -> argparse.Namespace:
                         dest='exam_pattern')
     parser.add_argument('--annotations-file-pattern',
                         dest='annotations_file_pattern')
-    args = parser.parse_args()
+    args = parser.parse_args(args_to_parse)
 
     return args
 
