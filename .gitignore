@@ -135,3 +135,4 @@ dmypy.json
 output/db/*csv
 cloud/
 tests/output/
+exports/
