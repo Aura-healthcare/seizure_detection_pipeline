@@ -12,14 +12,14 @@ TEST_METHODS = ['hamilton', 'xqrs', 'gqrs', 'swt', 'engelsee']
 def test_tuh_detect_qrs():
 
     for method in TEST_METHODS:
-        sampling_frequency, filename = detect_qrs(
-            filename=TEST_TUH_EDF_FILENAME,
+        sampling_frequency, export_filename = detect_qrs(
+            filepath=TEST_TUH_EDF_FILENAME,
             method=method,
             exam_id=TEST_TUH_EXAM_ID,
             output_folder=OUTPUT_FOLDER)
 
         assert(sampling_frequency == 250)
-        assert (filename == ''.join([OUTPUT_FOLDER,
+        assert (export_filename == ''.join([OUTPUT_FOLDER,
                                      '/',
                                      TEST_TUH_EXAM_ID,
                                      '.csv']))
@@ -28,7 +28,7 @@ def test_tuh_detect_qrs():
 def test_tuh_parse_detect_qrs_args():
 
     bash_command = (f'python3 src/usecase/detect_qrs.py '
-                    f'--filename {TEST_TUH_EDF_FILENAME} '
+                    f'--filepath {TEST_TUH_EDF_FILENAME} '
                     f'--method hamilton '
                     f'--exam-id {TEST_TUH_EXAM_ID} '
                     f'--output-folder {OUTPUT_FOLDER}')
@@ -38,7 +38,7 @@ def test_tuh_parse_detect_qrs_args():
 
     correct_parser = argparse.Namespace(
         exam_id=TEST_TUH_EXAM_ID,
-        filename=TEST_TUH_EDF_FILENAME,
+        filepath=TEST_TUH_EDF_FILENAME,
         method='hamilton',
         output_folder=OUTPUT_FOLDER)
     correct_parser_dict = convert_args_to_dict(correct_parser)

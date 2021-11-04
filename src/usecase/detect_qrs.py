@@ -14,7 +14,7 @@ METHODS = ['hamilton', 'xqrs', 'gqrs', 'swt', 'engelsee']
 DEFAULT_METHOD = 'hamilton'
 
 
-def detect_qrs(filename: str,
+def detect_qrs(filepath: str,
                method: str,
                exam_id: str,
                output_folder: str = OUTPUT_FOLDER) -> Tuple[int, str]:
@@ -23,7 +23,7 @@ def detect_qrs(filename: str,
     file.
     '''
     # Read ECG channel from EDF files
-    edfloader = EdfLoader(filename)
+    edfloader = EdfLoader(filepath)
     ecg_channel_name = edfloader.get_ecg_candidate_channel()
     start_time, end_time = edfloader.get_edf_file_interval()
 
@@ -44,26 +44,25 @@ def detect_qrs(filename: str,
 
     # Export
     os.makedirs(output_folder, exist_ok=True)
-    filename = f"{exam_id}.csv"
-    filepath = os.path.join(output_folder, filename)
-    df_detections.to_csv(filepath, sep=',', index=True)
+    export_filename = f"{exam_id}.csv"
+    export_filepath = os.path.join(output_folder, export_filename)
+    df_detections.to_csv(export_filepath, sep=',', index=True)
 
-    return sampling_frequency, filepath
+    return sampling_frequency, export_filepath
 
 
 def parse_detect_qrs_args(args_to_parse: List[str]) -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description='CLI parameter input')
-    parser.add_argument('--filename',
-                        dest='filename',
+    parser.add_argument('--filepath',
+                        dest='filepath',
                         required=True)
     parser.add_argument('--method',
                         dest='method',
                         required=True,
                         choices=METHODS)
     parser.add_argument('--exam-id',
-                        dest='exam_id',
-                        required=True)
+                        dest='exam_id')
     parser.add_argument('--output-folder',
                         dest='output_folder')
 
@@ -72,8 +71,18 @@ def parse_detect_qrs_args(args_to_parse: List[str]) -> argparse.Namespace:
     return args
 
 
+def parse_exam_id(filepath: str) -> str:
+
+    exam_id = os.path.basename(filepath)
+
+    return exam_id
+
+
 if __name__ == "__main__":
 
     args = parse_detect_qrs_args(sys.argv[1:])
     args_dict = convert_args_to_dict(args)
+    if 'exam_id' not in args_dict:
+        exam_id = parse_exam_id(args_dict['filepath'])
+        args_dict.update({'exam_id': exam_id})
     detect_qrs(**args_dict)
