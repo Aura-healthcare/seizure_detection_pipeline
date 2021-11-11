@@ -1,7 +1,8 @@
-import os
 import argparse
+import os
 import sys
 from typing import List
+
 import numpy as np
 import pandas as pd
 
@@ -10,12 +11,13 @@ from hrvanalysis import remove_outliers, remove_ectopic_beats, \
     get_sampen, get_poincare_plot_features, get_frequency_domain_features
 
 sys.path.append('.')
-from src.usecase.utilities import convert_args_to_dict
+from src.usecase.utilities import convert_args_to_dict, generate_output_path
 
-SHORT_WINDOW = 10000  # short window lasts 10 seconds - 10 000 milliseconds
-MEDIUM_WINDOW = 60000  # medium window lasts 60 secondes
-LARGE_WINDOW = 150000  # large window lasts 2 minutes 30 seconds
-# REFACT & chiffres
+SLIDING_WINDOW = 1_000
+SHORT_WINDOW = 10_000  # short window lasts 10 seconds - 10 000 milliseconds
+MEDIUM_WINDOW = 60_000  # medium window lasts 60 secondes
+LARGE_WINDOW = 15_0000  # large window lasts 2 minutes 30 seconds
+
 OUTPUT_FOLDER = 'output/features'
 
 FEATURES_KEY_TO_INDEX = {
@@ -52,15 +54,48 @@ FEATURES_KEY_TO_INDEX = {
 
 
 class compute_features:
+    """
+    This class compute Heart Rate Variability features based on detected
+    RR-intervals. Some features are efficent only on some time periods,
+    therefore there are 3 time windows to compute when time availiable is
+    long enough. A sliding time window allows to scroll through timeline to
+    to compute at different start points.
 
+    *compute* method is used to compute all possible features directly. They
+    will be stored in attribute *features*.
+    """
     def __init__(self,
                  rr_timestamps: np.array,
                  rr_intervals: np.array,
                  features_key_to_index: dict,
+                 sliding_window: int,
                  short_window: int,
                  medium_window: int,
                  large_window: int):
+        """
+        Initialize all required attributes to compute Heart Rate Variation.
 
+        Parameters
+        ----------
+        rr_timestamps : np.array
+            Computed RR intervals timestamps as an array
+        rr_intervals : np.array
+            RR intervals are each timestamps as an array
+        features_key_to_index : dict
+            Features to index as a dictionnary. Needed to add data at the right
+            position
+        sliding_window : int
+            Period in milliseconds that will be used to slide on the timeline
+        short_window : int
+            Size of the short time window, in milliseconds, which fits to
+            compute time domain features
+        medium_window : int
+            Size of the medium time window, in milliseconds, which fits to
+            compute
+        large_window : int
+            Size of the large time window, in milliseconds, which fits to
+            compute non linear features
+        """
         # Sets arguments as class attributes
         self.__dict__.update(locals())
 
@@ -73,9 +108,7 @@ class compute_features:
 
         # Compute quantity of short intervals to iterate
         self.n_short_intervals = int(
-            (self.rr_timestamps[-1] + self.rr_intervals[-1])
-            / self.short_window) \
-            + 1
+            (self.rr_timestamps[-1] / self.sliding_window) + 1)
 
         # Initialize "features" variable to store results
         self.features = np.empty([self.n_short_intervals,
@@ -86,7 +119,10 @@ class compute_features:
         self.compute()
 
     def compute(self):
-
+        """
+        From all attributes as parameters, will compute all possible to compute
+        features and store them in attribute "features".
+        """
         for _index in range(self.n_short_intervals):
 
             (self.features
@@ -98,11 +134,11 @@ class compute_features:
             (self.features
                 [_index]
                 [self.features_key_to_index
-                    ["interval_start_time"]]) = _index * self.short_window
+                    ["interval_start_time"]]) = _index * self.sliding_window
 
             for _size in ['short', 'medium', 'large']:
                 _window_size = self.__dict__[f'{_size}_window']
-                if (_index * self.short_window) >= _window_size:
+                if (_index * self.sliding_window) >= _window_size:
                     # >= ou >(intialement) ?
                     _rr_on_intervals = self.get_rr_intervals_on_window(
                         index=_index,
@@ -113,19 +149,31 @@ class compute_features:
                     elif _size == 'medium':
                         self.compute_non_linear_features(_index, _clean_rrs)
                     elif _size == 'large':
-                        self.compute_time_domain_features(_index, _clean_rrs)
+                        self.compute_frequency_domain_features(_index,
+                                                               _clean_rrs)
 
     def get_rr_intervals_on_window(self,
                                    index: int,
                                    size: str) -> np.array:
         """
-        From an index (COMPETE) and a window size, filter rr_intervals
-        on this window
+        From an index and a window size, filter rr_intervals on this window
+        size before index.
+
+        Parameters
+        ----------
+        index : int
+            Index of the timeline splitted by sliding window size
+        size : str
+            Size of the window, choices are [small, medium, large]
+
+        Returns
+        -------
+        rr_on_intervals : np.array
+            RR intervals on the select time window.
         """
         window = self.__dict__[f'{size}_window']
         offset = (index - self.__dict__[f"{size}_window_offset"]) \
-            * self.short_window
-
+            * self.sliding_window
         rr_indices = np.logical_and(
             self.rr_timestamps >= offset,
             self.rr_timestamps < (offset + window))
@@ -139,7 +187,19 @@ class compute_features:
 
     def get_clean_intervals(self,
                             rr_intervals: np.array) -> np.array:
+        """
+        Clean and returns RR intervals.
 
+        Parameters
+        ----------
+        rr_intervals : np.array
+            RR intervals to clean as an array
+
+        Returns
+        -------
+        interpolated_nn_intervals : np.array
+            The same RR intervals cleaned from outliers
+        """
         # Removes outliers from signal
         rr_intervals_without_outliers = remove_outliers(
             rr_intervals=rr_intervals,
@@ -164,10 +224,17 @@ class compute_features:
     def compute_time_domain_features(self,
                                      index: int,
                                      clean_rrs: np.array):
-        '''
-        Computes non time domain features from HRVanalysis. These features are
-        meant for short window features.
-        '''
+        """
+        Computes time domain features from HRVanalysis. These features are
+        meant for short window features and are added to features attribute.
+
+        Parameters
+        ----------
+        index : int
+            Index of the timeline splitted by sliding window size
+        clean_rrs : np.array
+            Clean RR intervals
+        """
         try:
             time_domain_features = get_time_domain_features(clean_rrs)
             for key in time_domain_features.keys():
@@ -183,10 +250,17 @@ class compute_features:
     def compute_non_linear_features(self,
                                     index: int,
                                     clean_rrs: np.array):
-        '''
+        """
         Computes non linear features from HRVanalysis. These features are meant
-        for medium window features.
-        '''
+        for medium window features and are added to features attribute.
+
+        Parameters
+        ----------
+        index : int
+            Index of the timeline splitted by sliding window size
+        clean_rrs : np.array
+            Clean RR intervals
+        """
         try:
             cvi_csi_features = get_csi_cvi_features(clean_rrs)
             for _key in cvi_csi_features.keys():
@@ -213,10 +287,18 @@ class compute_features:
     def compute_frequency_domain_features(self,
                                           index: int,
                                           clean_rrs: np.array):
-        '''
+        """
         Computes frequency domain features from HRV analysis. These features
-        are meant for large window features.
-        '''
+        are meant for large window features and are added to features
+        attribute.
+
+        Parameters
+        ----------
+        index : int
+            Index of the timeline splitted by sliding window size
+        clean_rrs : np.array
+            Clean RR intervals
+        """
         try:
             frequency_domain_features = get_frequency_domain_features(
                 clean_rrs=clean_rrs)
@@ -233,15 +315,41 @@ class compute_features:
 
 def compute_hrvanalysis_features(rr_intervals_file_path: str,
                                  output_folder: str = OUTPUT_FOLDER,
+                                 sliding_window: int = SLIDING_WINDOW,
                                  short_window: int = SHORT_WINDOW,
                                  medium_window: int = MEDIUM_WINDOW,
                                  large_window: int = LARGE_WINDOW,
                                  features_key_to_index: dict =
                                  FEATURES_KEY_TO_INDEX) -> str:
-    '''
-    Computes features from RR-intervals (from a csv file),
-    and writes them in another csv file.
-    '''
+    """
+    From a csv file including RR-intervals, computes HRVanalysis features and
+    export them as a CSV.
+
+    Parameters
+    ----------
+    rr_intervals_file_path: str
+        Path of RR intervals csv file
+    output_folder : str
+        Path of the output folder
+    sliding_window : int
+        Period in milliseconds that will be used to slide on the timeline
+    short_window : int
+        Size of the short time window, in milliseconds, which fits to compute
+        time domain features
+    medium_window : int
+        Size of the medium time window, in milliseconds, which fits to compute
+    large_window : int
+        Size of the large time window, in milliseconds, which fits to compute
+        non linear features
+    features_key_to_index : dict
+        A dictionnary with the name and index of features to include. Should
+        not be changed
+
+    Returns
+    -------
+    output_file_path :
+        Output file of computed HRVanalysis features
+    """
     df_rr_intervals = pd.read_csv(
         os.path.join(rr_intervals_file_path),
         index_col=0)
@@ -252,6 +360,7 @@ def compute_hrvanalysis_features(rr_intervals_file_path: str,
         rr_timestamps=rr_timestamps,
         rr_intervals=rr_intervals,
         features_key_to_index=features_key_to_index,
+        sliding_window=sliding_window,
         short_window=short_window,
         medium_window=medium_window,
         large_window=large_window)
@@ -261,24 +370,41 @@ def compute_hrvanalysis_features(rr_intervals_file_path: str,
         columns=features_key_to_index)
 
     # EXPORT
-    os.makedirs(output_folder, exist_ok=True)
-    file_parsing = rr_intervals_file_path.split('/')[-1].split('.')[0]
-    filename = f'{file_parsing}.csv'
-    filepath = os.path.join(output_folder, filename)
-    df_features.to_csv(filepath, sep=',', index=True)
+    output_file_path = generate_output_path(
+        input_file_path=rr_intervals_file_path,
+        output_folder=output_folder,
+        format='csv')
 
-    return filepath
+    df_features.to_csv(output_file_path, sep=',', index=False)
+
+    return output_file_path
 
 
 def parse_compute_hrvanalysis_features_args(
         args_to_parse: List[str]) -> argparse.Namespace:
+    """
+    Parse arguments for adaptable input.
 
+    parameters
+    ----------
+    args_to_parse : List[str]
+        List of the element to parse. Should be sys.argv[1:] if args are
+        inputed via CLI
+
+    returns
+    -------
+    args : argparse.Namespace
+        Parsed arguments
+    """
     parser = argparse.ArgumentParser(description='CLI parameter input')
     parser.add_argument('--rr-intervals-file-path',
                         dest='rr_intervals_file_path',
                         required=True)
     parser.add_argument('--output-folder',
                         dest='output_folder')
+    parser.add_argument('--sliding-window',
+                        dest='sliding_window',
+                        type=int)
     parser.add_argument('--short-window',
                         dest='short_window',
                         type=int)
