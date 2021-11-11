@@ -71,8 +71,6 @@ class EdfLoader:
                 seconds=f.getFileDuration())
             return pd.Timestamp(start_datetime), pd.Timestamp(end_datetime)
 
-        return None, None
-
     def ecg_channel_read(
         self,
         channel_name: str,
