@@ -6,14 +6,13 @@ class:
     * EdfLoader - A class used to load an edf file and export it in
     DataFrame format
 """
-from os.path import join
-
 import pandas as pd
 import re
 from pyedflib import highlevel
 from pyedflib import edfreader
 from typing import Tuple
 from datetime import timedelta
+
 
 class EdfLoader:
     """
@@ -64,24 +63,28 @@ class EdfLoader:
 
         return ecg_candidate_channel[0]
 
-
     def get_edf_file_interval(self) -> Tuple[pd.Timestamp, pd.Timestamp]:
 
         with edfreader.EdfReader(self.edf_file_path) as f:
             start_datetime = f.getStartdatetime()
-            end_datetime = start_datetime + timedelta(seconds=f.getFileDuration())
+            end_datetime = start_datetime + timedelta(
+                seconds=f.getFileDuration())
             return pd.Timestamp(start_datetime), pd.Timestamp(end_datetime)
 
         return None, None
 
+    def ecg_channel_read(
+        self,
+        channel_name: str,
+        start_time: pd.Timestamp,
+        end_time: pd.Timestamp) -> Tuple[int,
+                                         pd.DataFrame,
+                                         pd.DataFrame,
+                                         pd.DataFrame]:
 
-    def ecg_channel_read(self,
-                         channel_name: str,
-                         start_time: pd.Timestamp,
-                         end_time: pd.Timestamp) -> \
-                         Tuple[int, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-
-        df_ecg = self.convert_edf_to_dataframe(channel_name, start_time, end_time)
+        df_ecg = self.convert_edf_to_dataframe(channel_name,
+                                               start_time,
+                                               end_time)
 
         sample_frequency = self.sampling_frequency_hz
 
