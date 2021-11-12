@@ -40,10 +40,7 @@ for edf_file in $(find $InputDest/* -type f -name "*.edf" ); do
     CleanDest=$(echo $InputDest | sed 's/\//\\\//g')
     relative_path=$(echo $path | sed "s/$CleanDest\///g")
 
-    # Get new filename
-    dest_filename=$(echo $filename | sed 's/edf/json/g')
-
-    python3 $ECG_PATH/src/usecase/detect_qrs.py --qrs-file-path $edf_file --method hamilton --output-folder $TargetDest/$relative_path/res-v0_6
+    python3 $ECG_PATH/src/usecase/detect_qrs.py --qrs-file-path $edf_file --method hamilton --output-folder $TargetDest/$relative_path
 
     if [ $? -eq 0 ]
     then

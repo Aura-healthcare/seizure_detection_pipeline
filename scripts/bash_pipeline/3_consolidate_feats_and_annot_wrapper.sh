@@ -1,11 +1,12 @@
 #!/bin/bash
 
 ## Option - select input directory to be copied from and output directory to copy into
-while getopts ":i:o:" option
+while getopts ":i:o:a:" option
 do
 case "${option}"
 in
 i) InputDest=${OPTARG};;
+a) AnnotDest=${OPTARG};;
 o) TargetDest=${OPTARG};;
 esac
 done
@@ -17,9 +18,10 @@ if [[ $InputDest ]] || [[ $TargetDest ]];
 then
   echo "Start Executing script"
 else
-  echo "No Input directory: $InputDest or Target directory: $TargetDest, use -i,-o options" >&2
+  echo "No Input feats directory: $InputDest or no input Annot directory: $AnnotDest or Target directory: $TargetDest, use -i,-a,-o options" >&2
   exit 1
 fi
+
 
 ## Copy TUH folder tree structure
 TargetDest=$(realpath $TargetDest)
@@ -31,25 +33,24 @@ cd $InputDest && find . -type d -exec mkdir -p -- $TargetDest/{} \; && cd -
 OIFS="$IFS"
 IFS=$'\n'
 
-## List all EDF files in InputDest ##
-for edf_file in $(find $InputDest/* -type f -name "*.tse_bi" ); do
+## List all rr_files in InputDest ##
+for features_file in $(find $InputDest/* -type f -name "*.csv" ); do
 
-    filename=$(echo "$edf_file" | awk -F/ '{print $NF}')
-
+    filename=$(echo "$features_file" | awk -F/ '{print $NF}')
     # Get relative path
-    path=$(echo $edf_file | sed "s/$filename//g")
+    path=$(echo $features_file | sed "s/$filename//g")
     CleanDest=$(echo $InputDest | sed 's/\//\\\//g')
     relative_path=$(echo $path | sed "s/$CleanDest\///g")
 
-    # Get new filename
-    dest_filename=$(echo $filename | sed 's/tse_bi/json/g')
+    annotation_file_path=$AnnotDest/$relative_path${filename%%\.*}.tse_bi 
 
-    python3 $ECG_PATH/scripts/10_data_prep/Annotation_extractor.py -a $edf_file -o $TargetDest/$relative_path/annot_$dest_filename
+	  python3 $ECG_PATH/src/usecase/consolidate_feats_and_annot.py --features-file-path $features_file --annotations-file-path $annotation_file_path --output-folder $TargetDest/$relative_path
+
     if [ $? -eq 0 ]
     then
-      echo "$edf_file - OK"
+      echo "$features_file and $annotation_file_path # - OK"
     else
-      echo "$edf_file - Fail" >&2
+      echo "$features_file and $annotation_file_path # - Fail" >&2
     fi
 
 done
