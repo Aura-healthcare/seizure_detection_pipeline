@@ -88,7 +88,10 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
     if seiz_length + bckg_length <= window_interval * segment_size_treshold:
         label_ratio = np.nan
     else:
-        label_ratio = seiz_length / bckg_length
+        if bckg_length > 0:
+            label_ratio = seiz_length / bckg_length
+        else:
+            label_ratio = np.nan
 
     return label_ratio
 
