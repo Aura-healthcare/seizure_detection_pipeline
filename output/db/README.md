@@ -1,1 +1,0 @@
-Database output directory
