@@ -9,10 +9,14 @@ import sys
 sys.path.append('.')
 
 from src.infrastructure.edf_loader import EdfLoader
+from src.usecase.utilities import convert_args_to_dict
 
 MODEL_FOLDER = 'models'
 MODELS = os.listdir(MODEL_FOLDER)
 OUTPUT_FOLDER = 'output/quality'
+
+ECG_QC_MODEL = 'rfc_normalized_2s.pkl'
+SAMPLING_FREQUENCY = 1000
 
 def parse_model(model: str) -> Tuple[str, str, int, bool]:
     model_path = os.path.join(MODEL_FOLDER, model)
@@ -26,23 +30,30 @@ def parse_model(model: str) -> Tuple[str, str, int, bool]:
     return model_path, model_name, length_chunk, is_normalized
 
 
-def write_quality_json(quality: List[int], exam_id: str, model_name:str) -> str:
-    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+def write_quality_json(quality: List[int],
+                       exam_id: str,
+                       model_name: str,
+                       output_foder: str) -> str:
+
+    os.makedirs(output_foder, exist_ok=True)
     filename = f"{exam_id}_{model_name}.csv"
-    with open(os.path.join(OUTPUT_FOLDER, filename), 'w') \
+    export_filepath = os.path.join(output_foder, filename)
+    with open(export_filepath, 'w') \
             as outfile:
         json.dump(quality, outfile)
-    return filename
+
+    return str(export_filepath)
 
 
-def apply_ecg_qc(filename: str, # TO DO RENAME TO filepath
-                 sampling_frequency: int,
-                 model: str,
-                 exam_id: str) -> str:
+def apply_ecg_qc(filepath: str,
+                 exam_id: str,
+                 output_folder: str = OUTPUT_FOLDER,
+                 sampling_frequency: int = SAMPLING_FREQUENCY,
+                 model: str = ECG_QC_MODEL) -> str:
     '''
     Applies an ECG QC model on a signal, and writes results in a json file.
     '''
-    edfloader = EdfLoader(filename)
+    edfloader = EdfLoader(filepath)
     ecg_channel_name = edfloader.get_ecg_candidate_channel()
     start_time, end_time = edfloader.get_edf_file_interval()
 
@@ -53,8 +64,12 @@ def apply_ecg_qc(filename: str, # TO DO RENAME TO filepath
     signal = list(ecg_data['signal'])
 
     model_path, model_name, length_chunk, is_normalized = parse_model(model)
-    algo = ecg_qc.EcgQc(sampling_frequency=sampling_frequency,
-                        model=model_path, normalized=is_normalized)
+    algo = ecg_qc.EcgQc()#sampling_frequency=sampling_frequency,
+                        #model=model,
+                        # normalized=True)
+                        #model_path,
+                        # normalized=is_normalized)
+
     # Preprocess signal : chunks of length_chunk seconds
     n = length_chunk * sampling_frequency
     signal_subdiv = [signal[i * n:(i + 1) * n]
@@ -65,28 +80,39 @@ def apply_ecg_qc(filename: str, # TO DO RENAME TO filepath
         signal_subdiv[-1] += [0 for j in range(n - m)]
     # Apply ecg_qc on each chunk
     signal_quality = [algo.get_signal_quality(x) for x in signal_subdiv]
-    filename = write_quality_json(signal_quality, exam_id, model_name)
-    return filename
 
 
-if __name__ == "__main__":
+    export_filepath = write_quality_json(signal_quality,
+                                         output_folder,
+                                         exam_id,
+                                         model_name)
+
+    return export_filepath
+
+
+def parse_apply_ecg_qc_args(
+        args_to_parse: List[str]) -> argparse.Namespace:
+
     parser = argparse.ArgumentParser(description='CLI parameter input')
-    parser.add_argument('--filename',
-                        dest='filename',
+    parser.add_argument('--filepath',
+                        dest='filepath',
                         required=True)
-    parser.add_argument('--sampling-frequency',
-                        dest='sampling_frequency',
-                        required=True)
-    parser.add_argument('--model',
-                        dest='model',
-                        required=True,
-                        choices=MODELS)
     parser.add_argument('--exam-id',
                         dest='exam_id',
                         required=True)
-    args = parser.parse_args()
+    parser.add_argument('--output-folder',
+                        dest='output_folder')
+    parser.add_argument('--sampling-frequency',
+                        dest='sampling_frequency')
+    parser.add_argument('--model',
+                        dest='model',
+                        choices=MODELS)
+    args = parser.parse_args(args_to_parse)
 
-    apply_ecg_qc(args.filename,
-                 args.sampling_frequency,
-                 args.model,
-                 args.exam_id)
+    return args
+
+
+if __name__ == "__main__":
+    args = parse_apply_ecg_qc_args(sys.argv[1:])
+    args_dict = convert_args_to_dict(args)
+    apply_ecg_qc(**args_dict)
