@@ -16,7 +16,7 @@ from src.usecase.utilities import convert_args_to_dict, generate_output_path
 SLIDING_WINDOW = 1_000
 SHORT_WINDOW = 10_000  # short window lasts 10 seconds - 10 000 milliseconds
 MEDIUM_WINDOW = 60_000  # medium window lasts 60 secondes
-LARGE_WINDOW = 15_0000  # large window lasts 2 minutes 30 seconds
+LARGE_WINDOW = 150_000  # large window lasts 2 minutes 30 seconds
 
 OUTPUT_FOLDER = 'output/features'
 
