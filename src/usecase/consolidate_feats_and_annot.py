@@ -8,7 +8,7 @@ sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict, generate_output_path
 
 OUTPUT_FOLDER = 'exports/consolidated_dataset'
-WINDOW_SIZE = 10_000
+WINDOW_INTERVAL = 10_000
 SEGMENT_SIZE_TRESHOLD = 0.9
 
 
@@ -16,10 +16,11 @@ def consolidate_feats_and_annot(
         features_file_path: str,
         annotations_file_path: str,
         output_folder: str = OUTPUT_FOLDER,
-        window_interval: int = WINDOW_SIZE,
+        window_interval: int = WINDOW_INTERVAL,
         segment_size_treshold: float = SEGMENT_SIZE_TRESHOLD,
         crop_dataset: bool = True) -> str:
-
+    
+    print(annotations_file_path)
     df_features = pd.read_csv(features_file_path)
     df_tse_bi = read_tse_bi(annotations_file_path)
 
@@ -121,8 +122,8 @@ def parse_consolidate_feats_and_annot_args(
                         required=True)
     parser.add_argument('--output-folder',
                         dest='output_folder')
-    parser.add_argument('--window-size',
-                        dest='window_size',
+    parser.add_argument('--window-interval',
+                        dest='window_interval',
                         type=int)
     parser.add_argument('--segment-size-treshold',
                         dest='segment_size_treshold',
