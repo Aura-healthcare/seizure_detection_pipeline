@@ -43,10 +43,15 @@ def detect_qrs(qrs_file_path: str,
     ecg_channel_name = edfloader.get_ecg_candidate_channel()
     start_time, end_time = edfloader.get_edf_file_interval()
 
-    sampling_frequency, ecg_data = edfloader.ecg_channel_read(
+    try:
+        sampling_frequency, ecg_data = edfloader.ecg_channel_read(
         ecg_channel_name,
         start_time,
         end_time)
+    except ValueError:
+        print(f'There is no ECG channel in {qrs_file_path}, exiting')
+        sys.exit()
+
 
     qrs_detector = QRSDetector()
     signal = list(ecg_data['signal'])
