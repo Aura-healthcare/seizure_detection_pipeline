@@ -136,3 +136,4 @@ output/db/*csv
 cloud/
 tests/output/
 exports/
+output/*/*
