@@ -4,18 +4,15 @@ import numpy as np
 import pandas as pd
 import pytest
 from src.usecase.compute_hrvanalysis_features import \
-    SLIDING_WINDOW,\
+    SLIDING_WINDOW, SHORT_WINDOW, MEDIUM_WINDOW, LARGE_WINDOW,\
     compute_hrvanalysis_features,\
     parse_compute_hrvanalysis_features_args,\
     compute_features,\
     FEATURES_KEY_TO_INDEX
 from src.usecase.utilities import convert_args_to_dict
-OUTPUT_FOLDER = 'tests/output/features'
-RR_INTERVAL_FILE_PATH = 'tests/test_data/rr_00009578_s006_t001.csv'
 
-SHORT_WINDOW = 10000  # short window lasts 10 seconds - 10 000 milliseconds
-MEDIUM_WINDOW = 60000  # medium window lasts 60 secondes
-LARGE_WINDOW = 150000  # large window lasts 2 minutes 30 seconds
+OUTPUT_FOLDER = 'tests/output/features'
+RR_INTERVAL_FILE_PATH = 'tests/test_data/rr_00007633_s003_t007.csv'
 
 @pytest.fixture
 def test_features_computer():
@@ -75,14 +72,14 @@ def test_get_rr_intervals_on_window_value_error(test_features_computer):
 
     try:
         test_features_computer.get_rr_intervals_on_window(
-            index=50,
+            index=-1,
             size='short')
     except ValueError:
         assert True
 
     try:
         test_features_computer.compute_time_domain_features(
-            index=50,
+            index=0,
             clean_rrs=['a'])
 
     except Exception:

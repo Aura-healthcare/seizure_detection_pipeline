@@ -99,13 +99,6 @@ class compute_features:
         # Sets arguments as class attributes
         self.__dict__.update(locals())
 
-        # Creates windows offsets, based on short_window size
-        for size in ['short', 'medium', 'large']:
-            self.__dict__.update(
-                {f'{size}_window_offset': (
-                    self.__dict__[f'{size}_window'] / self.short_window
-                    )})
-
         # Compute quantity of short intervals to iterate
         self.n_short_intervals = int(
             (self.rr_timestamps[-1] / self.sliding_window) + 1)
@@ -171,12 +164,12 @@ class compute_features:
         rr_on_intervals : np.array
             RR intervals on the select time window.
         """
+        starting_timestamp = index * self.sliding_window
         window = self.__dict__[f'{size}_window']
-        offset = (index - self.__dict__[f"{size}_window_offset"]) \
-            * self.sliding_window
+        offset = (starting_timestamp - window)
         rr_indices = np.logical_and(
             self.rr_timestamps >= offset,
-            self.rr_timestamps < (offset + window))
+            self.rr_timestamps < starting_timestamp)
 
         rr_on_intervals = self.rr_intervals[rr_indices]
 
@@ -204,7 +197,8 @@ class compute_features:
         rr_intervals_without_outliers = remove_outliers(
             rr_intervals=rr_intervals,
             low_rri=300,
-            high_rri=1800)
+            high_rri=1800,
+            verbose=False)
 
         # Replaces outliers nan values with linear interpolation
         interpolated_rr_intervals = interpolate_nan_values(
@@ -214,7 +208,9 @@ class compute_features:
         # Removes ectopic beats from signal
         nn_intervals_list = remove_ectopic_beats(
             rr_intervals=interpolated_rr_intervals,
-            method="malik")
+            method="malik",
+            verbose=False)
+
         # Replaces ectopic beats nan values with linear interpolation
         interpolated_nn_intervals = interpolate_nan_values(
            rr_intervals=nn_intervals_list)
@@ -242,6 +238,9 @@ class compute_features:
                     [index]
                     [self.features_key_to_index[key]]) = \
                         time_domain_features[key]
+
+        except ZeroDivisionError:
+            pass
 
         except Exception as e:
             print(f'Interval {str(index)} - '
@@ -301,7 +300,7 @@ class compute_features:
         """
         try:
             frequency_domain_features = get_frequency_domain_features(
-                clean_rrs=clean_rrs)
+                nn_intervals=clean_rrs)
             for _key in frequency_domain_features.keys():
                 if _key in self.features_key_to_index:
                     (self.features
