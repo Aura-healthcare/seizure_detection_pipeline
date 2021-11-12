@@ -15,7 +15,7 @@ ANNOTATIONS_FILE_PATH = \
 WINDOW_SIZE = 10_000
 SEGMENT_SIZE_TRESHOLD = 0.9
 CROPPED_DATASET = True
-NO_BCKG_TSE_BI_PATH = 'tests/test_data/00009578_s006_t001.tse_bi'
+NO_BCKG_TSE_BI_PATH = 'tests/test_data/no_bckg_00009578_s006_t001.tse_bi'
 
 
 def generate_consolidated_features_and_annot(cropped: bool):
