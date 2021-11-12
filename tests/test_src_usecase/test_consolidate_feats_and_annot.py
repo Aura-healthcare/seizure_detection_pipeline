@@ -12,7 +12,7 @@ OUTPUT_FOLDER = 'tests/output/features'
 FEATURES_FILE_PATH = 'tests/test_data/feats_00009578_s006_t001.csv'
 ANNOTATIONS_FILE_PATH = \
     'data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.tse_bi'
-WINDOW_SIZE = 10_000
+WINDOW_INTERVAL= 10_000
 SEGMENT_SIZE_TRESHOLD = 0.9
 CROPPED_DATASET = True
 NO_BCKG_TSE_BI_PATH = 'tests/test_data/no_bckg_00009578_s006_t001.tse_bi'
@@ -23,7 +23,7 @@ def generate_consolidated_features_and_annot(cropped: bool):
         features_file_path=FEATURES_FILE_PATH,
         annotations_file_path=ANNOTATIONS_FILE_PATH,
         output_folder=OUTPUT_FOLDER,
-        window_interval=WINDOW_SIZE,
+        window_interval=WINDOW_INTERVAL,
         segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
         crop_dataset=cropped)
 
@@ -68,7 +68,7 @@ def test_get_label_on_interval_no_bckg_exception():
         get_label_on_interval(
             df_tse_bi=df_tse_bi,
             interval_start_time=0,
-            window_interval=WINDOW_SIZE,
+            window_interval=WINDOW_INTERVAL,
             segment_size_treshold=SEGMENT_SIZE_TRESHOLD)
     except KeyError:
         assert True
@@ -80,7 +80,7 @@ def test_tuh_parse_consolidate_feats_and_annot_args():
                     f'--features-file-path {FEATURES_FILE_PATH} '
                     f'--annotations-file-path {ANNOTATIONS_FILE_PATH} '
                     f'--output-folder {OUTPUT_FOLDER} '
-                    f'--window-size {WINDOW_SIZE} '
+                    f'--window-interval {WINDOW_INTERVAL} '
                     f'--segment-size-treshold {SEGMENT_SIZE_TRESHOLD} '
                     f'--crop-dataset {CROPPED_DATASET}')
     args_to_parse = bash_command.split()[2:]
@@ -91,7 +91,7 @@ def test_tuh_parse_consolidate_feats_and_annot_args():
         features_file_path=FEATURES_FILE_PATH,
         annotations_file_path=ANNOTATIONS_FILE_PATH,
         output_folder=OUTPUT_FOLDER,
-        window_size=WINDOW_SIZE,
+        window_interval=WINDOW_INTERVAL,
         segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
         crop_dataset=CROPPED_DATASET)
 
