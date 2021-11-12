@@ -7,6 +7,7 @@ from typing import Tuple, List
 
 import pandas as pd
 
+sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict
 
 # TUH database example
