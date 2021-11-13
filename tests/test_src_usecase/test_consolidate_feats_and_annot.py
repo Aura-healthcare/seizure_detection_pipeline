@@ -9,13 +9,13 @@ from src.usecase.consolidate_feats_and_annot import \
 from src.usecase.utilities import convert_args_to_dict
 
 OUTPUT_FOLDER = 'tests/output/features'
-FEATURES_FILE_PATH = 'tests/test_data/feats_00009578_s006_t001.csv'
+FEATURES_FILE_PATH = 'data/test_data/feats_00009578_s006_t001.csv'
 ANNOTATIONS_FILE_PATH = \
     'data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.tse_bi'
 WINDOW_INTERVAL= 10_000
 SEGMENT_SIZE_TRESHOLD = 0.9
 CROPPED_DATASET = True
-NO_BCKG_TSE_BI_PATH = 'tests/test_data/no_bckg_00009578_s006_t001.tse_bi'
+NO_BCKG_TSE_BI_PATH = 'data/test_data/no_bckg_00009578_s006_t001.tse_bi'
 
 
 def generate_consolidated_features_and_annot(cropped: bool):

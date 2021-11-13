@@ -11,8 +11,8 @@ from src.usecase.compute_hrvanalysis_features import \
     FEATURES_KEY_TO_INDEX
 from src.usecase.utilities import convert_args_to_dict
 
-OUTPUT_FOLDER = 'tests/output/features'
-RR_INTERVAL_FILE_PATH = 'tests/test_data/rr_00007633_s003_t007.csv'
+OUTPUT_FOLDER = 'data/output/features'
+RR_INTERVAL_FILE_PATH = 'data/test_data/rr_00007633_s003_t007.csv'
 
 @pytest.fixture
 def test_features_computer():
