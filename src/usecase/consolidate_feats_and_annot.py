@@ -1,3 +1,9 @@
+"""
+This script is used to consolidate hrv features dataset and annotations.
+
+Copyright (C) 2021 Association Aura
+SPDX-License-Identifier: GPL-3.0
+"""
 import argparse
 import numpy as np
 import pandas as pd
@@ -19,8 +25,31 @@ def consolidate_feats_and_annot(
         window_interval: int = WINDOW_INTERVAL,
         segment_size_treshold: float = SEGMENT_SIZE_TRESHOLD,
         crop_dataset: bool = True) -> str:
-    
-    print(annotations_file_path)
+    """
+    Create a pd.DataFrame form a tse_bi file.
+
+    Parameters
+    ----------
+    features_file_path : str
+        Path of features file. Should be a CSV.
+    annotations_file_path : str
+        Path of annotations file. Format should be *.tse_bi.
+    output_folder : str
+        Path of the output folder
+    window_interval : int
+        Period in milliseconds from interval start_time to create upper limit
+    segment_size_treshold : float
+        Proportion of labels required to return a label
+    crop_dataset : bool
+        If True, removes the first and last line from the dataset:
+            * First Line cannot include computed fetures
+            * Last line cannot include label
+
+    Returns
+    -------
+    df_tse_bi : pd.DataFrame
+        DataFrame including the data from input tse_bi
+    """
     df_features = pd.read_csv(features_file_path)
     df_tse_bi = read_tse_bi(annotations_file_path)
 
@@ -47,6 +76,22 @@ def consolidate_feats_and_annot(
 
 
 def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
+    """
+    Create a pd.DataFrame form a tse_bi file.
+
+    Parameters
+    ----------
+    annotations_file_path : str
+        Path of annotations file. Format should be *.tse_bi.
+
+    Returns
+    -------
+    df_tse_bi : pd.DataFrame
+        DataFrame including the data from input tse_bi
+    """
+    if annotations_file_path.split('/')[-1].split['.'][-1] != 'tse_bi':
+        print(f'Please input a tse_bi file. Input: {annotations_file_path}')
+        sys.exit()
 
     df_tse_bi = pd.read_csv(annotations_file_path,
                             sep=' ',
@@ -64,7 +109,25 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
                           interval_start_time: int,
                           window_interval: int,
                           segment_size_treshold: float) -> float:
+    """
+    From an annotation DataFrame, select annotations on an interval.
 
+    Parameters
+    ----------
+    df_tse_bi : pd.DataFrame
+        pd.DataFrame including annotations
+    interval_start_time : int
+        Timestamp in milliseconds for lower limit
+    window_interval : int
+        Period in milliseconds from interval start_time to create upper limit
+    segment_size_treshold : float
+        Proportion of labels required to return a label
+
+    Returns
+    -------
+    label_ratio : float
+        Ratio of seizure other the segment selected
+    """
     end_marker = interval_start_time + window_interval
     df_filtered = df_tse_bi[
         (df_tse_bi['start'] <= interval_start_time)]
@@ -90,7 +153,7 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
         label_ratio = np.nan
     else:
         if bckg_length > 0:
-            label_ratio = seiz_length / bckg_length
+            label_ratio = seiz_length / (seiz_length + bckg_length)
         else:
             label_ratio = np.nan
 
