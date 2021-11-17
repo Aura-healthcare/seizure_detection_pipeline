@@ -25,7 +25,7 @@ test:
 
 coverage:
 	. $(FOLDER_PATH)/env/bin/activate; \
-	pytest --cov=$(SRC_PATH) --cov-report html $(TEST_PATH) 
+	pytest --cov=$(SRC_PATH) --cov-report html $(TEST_PATH)
 
 # FETCH DATA (FOR AIRFLOW PREPROCESSING)
 # -------------
@@ -83,4 +83,4 @@ create_ml_dataset:
 # ------------------
 train:
 	. $(FOLDER_PATH)/env/bin/activate; \
-	python3 scripts/40_train_model/train_model.py -i $(EXPORT_PATH)/ml_dataset/df_ml.csv \
+	python3 src/usecase/train_model.py --ml-dataset-path $(EXPORT_PATH)/ml_dataset/df_ml.csv
