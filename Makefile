@@ -11,6 +11,12 @@ EXPORT_PATH=./output
 clean:
 	rm output/db/*csv
 
+flake8:
+	flake8 --ignore=E402 src/usecase
+
+flake8_all:
+	flake8 --ignore=E402 src/ tests/ dags/
+
 test:
 	pytest -s -vvv $(TEST_PATH)
 
