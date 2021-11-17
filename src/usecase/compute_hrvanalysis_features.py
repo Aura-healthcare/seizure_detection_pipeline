@@ -1,8 +1,8 @@
 """
 This script is used to compute hrvanalysis features on RR intervals.
 
-Copyright (C) 2021 Association Aura
-SPDX-License-Identifier: GPL-3.0
+copyright (c) 2021 association aura
+spdx-license-identifier: gpl-3.0
 """
 import argparse
 import os
@@ -227,7 +227,7 @@ class compute_features:
 
         # Replaces ectopic beats nan values with linear interpolation
         interpolated_nn_intervals = interpolate_nan_values(
-           rr_intervals=nn_intervals_list)
+            rr_intervals=nn_intervals_list)
 
         return interpolated_nn_intervals
 
@@ -253,7 +253,7 @@ class compute_features:
                 (self.features
                     [index]
                     [self.features_key_to_index[key]]) = \
-                        time_domain_features[key]
+                    time_domain_features[key]
 
         except ZeroDivisionError:
             pass
@@ -284,7 +284,7 @@ class compute_features:
                 (self.features
                     [index]
                     [self.features_key_to_index[_key]]) = \
-                        cvi_csi_features[_key]
+                    cvi_csi_features[_key]
 
             sampen = get_sampen(clean_rrs)
             (self.features
@@ -325,7 +325,7 @@ class compute_features:
                     (self.features
                         [index]
                         [self.features_key_to_index[_key]]) = \
-                            frequency_domain_features[_key]
+                        frequency_domain_features[_key]
         except Exception as e:
             print(f"Interval {str(index)} - "
                   f"computation issue on large window features {str(e)}")
