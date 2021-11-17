@@ -89,9 +89,9 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
     df_tse_bi : pd.DataFrame
         DataFrame including the data from input tse_bi
     """
-    if annotations_file_path.split('/')[-1].split['.'][-1] != 'tse_bi':
-        print(f'Please input a tse_bi file. Input: {annotations_file_path}')
-        sys.exit()
+    if annotations_file_path.split('/')[-1].split('.')[-1] != 'tse_bi':
+        raise ValueError(
+            f'Please input a tse_bi file. Input: {annotations_file_path}')
 
     df_tse_bi = pd.read_csv(annotations_file_path,
                             sep=' ',

@@ -101,3 +101,16 @@ def test_tuh_parse_consolidate_feats_and_annot_args():
 
 def test_get_label_on_interval():
     pass
+
+def test_input_read_tse_bi_test(
+    annotations_file_path_correct = ANNOTATIONS_FILE_PATH,
+    annotations_file_path_incorrect = \
+        'data/test_data/rr_00007633_s003_t007.csv'):
+
+    read_tse_bi(annotations_file_path_correct)
+    assert True
+
+    try:
+        read_tse_bi(annotations_file_path_incorrect)
+    except ValueError:
+        assert True
