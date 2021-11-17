@@ -1,3 +1,9 @@
+"""
+This script is used to create a consolidated Machine Learning dataset.
+
+Copyright (C) 2021 Association Aura
+SPDX-License-Identifier: GPL-3.0
+"""
 import argparse
 import pandas as pd
 import glob
@@ -7,44 +13,33 @@ from typing import List
 
 sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict
+from src.usecase.compute_hrvanalysis_features import FEATURES_KEY_TO_INDEX
 
 ML_DATASET_OUTPUT_FOLDER = 'exports/ml_dataset'
 
 
 def create_ml_dataset(input_folder: str,
-                      output_folder: str = ML_DATASET_OUTPUT_FOLDER):
+                      output_folder: str = ML_DATASET_OUTPUT_FOLDER) -> str:
+    """
+    Merge individual dataset in a single large dataset.
 
+    Parameters
+    ----------
+    input_folder : str
+        Path of folder including datasets to merge
+    output_folder : str
+        Path of the output folder
+
+    Returns
+    -------
+    output_file_path :
+        Output file of the consolidated dataset
+    """
     consolidated_datasets = glob.glob(f'{input_folder}/**/*.csv',
                                       recursive=True)
-    df_consolidated = pd.DataFrame(columns=["interval_index",
-                                            "interval_start_time",
-                                            "mean_nni",
-                                            "sdnn",
-                                            "sdsd",
-                                            "nni_50",
-                                            "pnni_50",
-                                            "nni_20",
-                                            "pnni_20",
-                                            "rmssd",
-                                            "median_nni",
-                                            "range_nni",
-                                            "cvsd", "cvnni",
-                                            "mean_hr",
-                                            "max_hr",
-                                            "min_hr",
-                                            "std_hr",
-                                            "lf",
-                                            "hf",
-                                            "vlf",
-                                            "lf_hf_ratio",
-                                            "csi",
-                                            "cvi",
-                                            "Modified_csi",
-                                            "sampen",
-                                            "sd1",
-                                            "sd2",
-                                            "ratio_sd2_sd1",
-                                            "label"])
+    df_consolidated = pd.DataFrame(
+        columns=[*FEATURES_KEY_TO_INDEX.keys(),
+                 'label'])
 
     for consolidated_dataset in consolidated_datasets:
         df_temp = pd.read_csv(consolidated_dataset)
@@ -52,9 +47,12 @@ def create_ml_dataset(input_folder: str,
 
     df_consolidated.reset_index(drop=True, inplace=True)
     os.makedirs(output_folder, exist_ok=True)
-    df_consolidated.to_csv(f'{output_folder}/df_ml.csv', index=False)
+    output_file_path = f'{output_folder}/df_ml.csv'
+    df_consolidated.to_csv(output_file_path, index=False)
 
     print(f'Size of output dataset: {df_consolidated.shape[0]}')
+
+    return output_file_path
 
 
 def parse_create_ml_dataset_args(
