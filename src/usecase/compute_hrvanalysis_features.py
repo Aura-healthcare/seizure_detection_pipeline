@@ -1,3 +1,9 @@
+"""
+This script is used to compute hrvanalysis features on RR intervals.
+
+Copyright (C) 2021 Association Aura
+SPDX-License-Identifier: GPL-3.0
+"""
 import argparse
 import os
 import sys
@@ -55,6 +61,8 @@ FEATURES_KEY_TO_INDEX = {
 
 class compute_features:
     """
+    Compute hrvanalysis features in attribute "features".
+
     This class compute Heart Rate Variability features based on detected
     RR-intervals. Some features are efficent only on some time periods,
     therefore there are 3 time windows to compute when time availiable is
@@ -64,6 +72,7 @@ class compute_features:
     *compute* method is used to compute all possible features directly. They
     will be stored in attribute *features*.
     """
+
     def __init__(self,
                  rr_timestamps: np.array,
                  rr_intervals: np.array,
@@ -113,8 +122,14 @@ class compute_features:
 
     def compute(self):
         """
-        From all attributes as parameters, will compute all possible to compute
-        features and store them in attribute "features".
+        Compute possible all features.
+
+        According to different threshold, compute possible features from
+        hrvanalysis:
+        * time domain
+        * non linear
+        * frequency domain
+        These features are stored in class attribute "features".
         """
         for _index in range(self.n_short_intervals):
 
@@ -149,8 +164,7 @@ class compute_features:
                                    index: int,
                                    size: str) -> np.array:
         """
-        From an index and a window size, filter rr_intervals on this window
-        size before index.
+        Filter RR interval corresponding to a time window before index.
 
         Parameters
         ----------
@@ -221,8 +235,10 @@ class compute_features:
                                      index: int,
                                      clean_rrs: np.array):
         """
-        Computes time domain features from HRVanalysis. These features are
-        meant for short window features and are added to features attribute.
+        Compute time domain features from HRVanalysis.
+
+        These features are meant for short window features and are added to
+        features attribute.
 
         Parameters
         ----------
@@ -250,8 +266,10 @@ class compute_features:
                                     index: int,
                                     clean_rrs: np.array):
         """
-        Computes non linear features from HRVanalysis. These features are meant
-        for medium window features and are added to features attribute.
+        Compute non linear features from HRVanalysis.
+
+        These features are meant for medium window features and are added to
+        features attribute.
 
         Parameters
         ----------
@@ -287,9 +305,10 @@ class compute_features:
                                           index: int,
                                           clean_rrs: np.array):
         """
-        Computes frequency domain features from HRV analysis. These features
-        are meant for large window features and are added to features
-        attribute.
+        Compute frequency domain features from HRV analysis.
+
+        These features are meant for large window features and are added to
+        features attribute.
 
         Parameters
         ----------
@@ -321,6 +340,8 @@ def compute_hrvanalysis_features(rr_intervals_file_path: str,
                                  features_key_to_index: dict =
                                  FEATURES_KEY_TO_INDEX) -> str:
     """
+    Compute HRV features from RR intervals.
+
     From a csv file including RR-intervals, computes HRVanalysis features and
     export them as a CSV.
 
