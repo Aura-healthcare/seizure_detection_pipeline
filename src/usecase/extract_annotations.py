@@ -1,3 +1,9 @@
+"""
+This script is used to extract annotations from a tse_bi file.
+
+copyright (c) 2021 association aura
+spdx-license-identifier: gpl-3.0
+"""
 import argparse
 import json
 import sys
@@ -14,6 +20,8 @@ def extract_annotations(annotations_file_path: str,
                         seizure_tag: str = SEIZURE_TAG,
                         background_tag: str = BACKGROUND_TAG) -> str:
     """
+    From a tse_bi file, export a json including binary seizure labels.
+
     From an annotations file path, output folder and binary tags for seizure or
     background activities, extract annotations by nature with start and
     end timestamps and export them in json format.
