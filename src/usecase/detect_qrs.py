@@ -1,3 +1,9 @@
+"""
+This script is used to detect and export RR intervals.
+
+Copyright (C) 2021 Association Aura
+SPDX-License-Identifier: GPL-3.0
+"""
 import os
 import argparse
 from typing import List
@@ -18,8 +24,10 @@ def detect_qrs(qrs_file_path: str,
                exam_id: str,
                output_folder: str = OUTPUT_FOLDER) -> str:
     """
-    Detects QRS on a signal, and writes their frame and RR-intervals in a csv
-    file.
+    Detect QRS on a, ECG signal signal.
+
+    From an EDF file path, detects QRS abd and writes their frame and
+    RR-intervals in a csv file.
 
     parameters
     ----------
@@ -45,13 +53,12 @@ def detect_qrs(qrs_file_path: str,
 
     try:
         sampling_frequency, ecg_data = edfloader.ecg_channel_read(
-        ecg_channel_name,
-        start_time,
-        end_time)
+            ecg_channel_name,
+            start_time,
+            end_time)
     except ValueError:
         print(f'There is no ECG channel in {qrs_file_path}, exiting')
         sys.exit()
-
 
     qrs_detector = QRSDetector()
     signal = list(ecg_data['signal'])
