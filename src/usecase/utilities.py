@@ -1,9 +1,17 @@
+"""
+This file includes utilities useful for other scripts.
+
+copyright (c) 2021 association aura
+spdx-license-identifier: gpl-3.0
+"""
 import argparse
 import os
 
 
 def convert_args_to_dict(args: argparse.Namespace) -> dict:
     """
+    Convert argparse arguments into a dictionnary.
+
     From an argparse Namespace, create a dictionnary with only inputed CLI
     arguments. Allows to use argparse with default values in functions.
 
@@ -30,6 +38,8 @@ def generate_output_path(input_file_path: str,
                          output_folder: str,
                          format: str) -> str:
     """
+    Generate an output path.
+
     From an input file path, output folder and format, create a output file
     path with coherent naming.
 
