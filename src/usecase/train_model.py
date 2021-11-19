@@ -24,8 +24,7 @@ import sys
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score, recall_score,\
-                            roc_auc_score, precision_score,\
-                            confusion_matrix, ConfusionMatrixDisplay
+    roc_auc_score, precision_score, confusion_matrix, ConfusionMatrixDisplay
 from sklearn.ensemble import RandomForestClassifier
 from typing import List
 
@@ -82,10 +81,10 @@ def compute_metrics(prefix: str,
         mlflow.log_metric(f'{prefix}_fp', fp)
         mlflow.log_metric(f'{prefix}_fn', fn)
         mlflow.log_metric(f'{prefix}_tp', tp)
-        mlflow.log_metric(f'{prefix}_tp_rate', tn/np.sum(cm))
-        mlflow.log_metric(f'{prefix}_fp_rate', fp/np.sum(cm))
-        mlflow.log_metric(f'{prefix}_fn_rate', fn/np.sum(cm))
-        mlflow.log_metric(f'{prefix}_tp_rate', tp/np.sum(cm))
+        mlflow.log_metric(f'{prefix}_tp_rate', tn / np.sum(cm))
+        mlflow.log_metric(f'{prefix}_fp_rate', fp / np.sum(cm))
+        mlflow.log_metric(f'{prefix}_fn_rate', fn / np.sum(cm))
+        mlflow.log_metric(f'{prefix}_tp_rate', tp / np.sum(cm))
 
     except ValueError:
         print('cannot compute metrics')
@@ -105,7 +104,7 @@ def compute_metrics(prefix: str,
             if normalize is None:
                 cm_disp = np.round(cm, 0)
             else:
-                cm_disp = np.round(cm/np.sum(cm.ravel()), 2)
+                cm_disp = np.round(cm / np.sum(cm.ravel()), 2)
 
             disp = ConfusionMatrixDisplay(confusion_matrix=cm_disp,
                                           display_labels=[0, 1])
@@ -124,10 +123,10 @@ def compute_metrics(prefix: str,
 
                 if time_unit == 'minutes':
                     cm_disp = np.round(
-                        cm*total_seconds/(60*np.sum(cm.ravel())), 2)
+                        cm * total_seconds / (60 * np.sum(cm.ravel())), 2)
                 else:
                     cm_disp = np.round(
-                        cm*total_seconds/(np.sum(cm.ravel())), 2)
+                        cm * total_seconds / (np.sum(cm.ravel())), 2)
 
                 disp = ConfusionMatrixDisplay(confusion_matrix=cm_disp,
                                               display_labels=[0, 1])
