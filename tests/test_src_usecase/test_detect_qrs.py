@@ -23,6 +23,7 @@ def test_tuh_detect_qrs():
         assert (export_filename == ''.join(
             [OUTPUT_FOLDER,
              '/',
+             'rr_',
              TEST_TUH_EXAM_ID,
              '.csv']))
 

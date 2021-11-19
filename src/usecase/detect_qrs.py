@@ -74,7 +74,8 @@ def detect_qrs(qrs_file_path: str,
     output_file_path = generate_output_path(
         input_file_path=exam_id,
         output_folder=output_folder,
-        format='csv')
+        format='csv',
+        prefix='rr')
 
     df_detections.to_csv(output_file_path, sep=',', index=True)
 

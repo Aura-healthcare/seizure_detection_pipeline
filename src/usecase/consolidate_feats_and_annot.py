@@ -68,7 +68,8 @@ def consolidate_feats_and_annot(
     output_file_path = generate_output_path(
         input_file_path=annotations_file_path,
         output_folder=output_folder,
-        format='csv')
+        format='csv',
+        prefix='cons')
 
     df_features.to_csv(output_file_path, sep=',', index=False)
 
