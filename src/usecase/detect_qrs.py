@@ -66,6 +66,7 @@ def detect_qrs(qrs_file_path: str,
         signal, sampling_frequency, method)
     df_detections = ecg_data.copy()
     df_detections = df_detections.iloc[detected_qrs[:-1]]
+    df_detections['timestamp'] = df_detections.index
     df_detections['frame'] = detected_qrs[:-1]
     df_detections['rr_interval'] = rr_intervals
     df_detections.drop(columns='signal', inplace=True)
@@ -77,7 +78,7 @@ def detect_qrs(qrs_file_path: str,
         format='csv',
         prefix='rr')
 
-    df_detections.to_csv(output_file_path, sep=',', index=True)
+    df_detections.to_csv(output_file_path, sep=',', index=False)
 
     return output_file_path, sampling_frequency
 
