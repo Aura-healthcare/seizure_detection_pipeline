@@ -37,10 +37,29 @@ def write_database(export_folder: str,
     df_candidates = df_data.merge(df_annotations,
                                   how='outer',
                                   on=['exam_id', 'patient_id'])
+    # annotations: parsing fichier - s*.edf + tse_bi
 
+    df_candidates.drop(columns='annotations_file_path', inplace=True)
+    # To improve
+    df_candidates.drop(columns='patient_id', inplace=True)
+    df_candidates.drop(columns='annotator_id', inplace=True)
+    # Remove non NA
+    df_candidates['annotations_file_path'] = df_candidates[
+        'edf_file_path'].apply(lambda x: parse_tse_bi(x))
+    df_candidates = df_candidates.dropna()
     df_candidates.to_csv(candidates_path, index=False, encoding="utf-8")
 
     return data_path, annotation_path, candidates_path
+
+
+def parse_tse_bi(x):
+    try:
+        split_limit = re.search('[_][s]\w*[.][e][d][f]', x).start()
+        tse_bi_file_path = '.'.join([x[:split_limit], 'tse_bi'])
+    except:
+        tse_bi_file_path = None
+
+    return tse_bi_file_path
 
 
 def fetch_database(

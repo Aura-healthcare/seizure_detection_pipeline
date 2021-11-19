@@ -158,14 +158,14 @@ def dag_seizure_detection_pipeline():
 #        }
 #    )
 
-    df_db = pd.read_csv(f'{FETCHED_DATA_FOLDER}/df_data.csv', encoding='utf-8')
+    df_db = pd.read_csv(f'{FETCHED_DATA_FOLDER}/df_candidates.csv', encoding='utf-8')
 
     for index in range(df_db.shape[0]):
-        qrs_file_path = df_db['data_file_path'].iloc[index]
+        qrs_file_path = df_db['edf_file_path'].iloc[index]
+        tse_bi_file_path = df_db['annotations_file_path'].iloc[index]
         exam_id = df_db['exam_id'].iloc[index]
         parameters = {'qrs_file_path': qrs_file_path,
-                      'annotations_file_path': ''.join([qrs_file_path[:-3],
-                                                        'tse_bi']),
+                      'annotations_file_path': tse_bi_file_path,
                       'exam_id': exam_id,
                       'method': DETECT_QRS_METHOD,
                       'rr_intervals_folder': RR_INTERVALS_FOLDER,
