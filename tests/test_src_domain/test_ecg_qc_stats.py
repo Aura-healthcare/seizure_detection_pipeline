@@ -1,4 +1,5 @@
-from src.domain.ecg_qc_stats import percentage_noisy_segments, length_record, noise_free_intervals_stats
+from src.domain.ecg_qc_stats import percentage_noisy_segments, length_record, \
+    noise_free_intervals_stats
 
 
 def test_percentage_noisy_segments_should_return_0_when_no_noise():

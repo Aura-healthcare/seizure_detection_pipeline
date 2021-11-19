@@ -130,3 +130,10 @@ dmypy.json
 
 # vscode
 .vscode
+
+# Addition locations
+output/db/*csv
+cloud/
+tests/output/
+exports/
+output/*/*

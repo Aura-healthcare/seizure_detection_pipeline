@@ -22,7 +22,7 @@ class QRSDetector:
             qrs_frames = processing.xqrs_detect(sig=ecg_data, fs=fs)
         except Exception:
             print("Exception in detect_qrs_xqrs")
-        return qrs_frames.tolist()
+        return qrs_frames
 
     def _detect_qrs_gqrs(self, ecg_data, fs):
         qrs_frames = []
@@ -30,7 +30,7 @@ class QRSDetector:
             qrs_frames = processing.qrs.gqrs_detect(sig=ecg_data, fs=fs*2)
         except Exception:
             print("Exception in detect_qrs_gqrs")
-        return qrs_frames.tolist()
+        return qrs_frames
 
     def _detect_qrs_hamilton(self, ecg_data, fs):
         qrs_frames = []
@@ -39,7 +39,7 @@ class QRSDetector:
                 signal=np.array(ecg_data), sampling_rate=fs, show=False)[2]
         except Exception:
             print("Exception in detect_qrs_gqrs")
-        return qrs_frames.tolist()
+        return qrs_frames
 
     def _detect_qrs_engelsee(self, ecg_data, fs):
         qrs_frames = []
