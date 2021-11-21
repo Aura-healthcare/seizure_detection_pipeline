@@ -18,6 +18,7 @@ TUH_EXAM_PATTERN = ".+\\/(.+)\\..+"
 TUH_ANNOTATOR_PATTERN = ""
 EXPORT_FOLDER = "output/db"
 
+DB = 'tuh'
 
 def write_database(export_folder: str,
                    df_data: pd.DataFrame,
@@ -45,17 +46,22 @@ def write_database(export_folder: str,
     df_candidates.drop(columns='annotator_id', inplace=True)
     # Remove non NA
     df_candidates['annotations_file_path'] = df_candidates[
-        'edf_file_path'].apply(lambda x: parse_tse_bi(x))
+        'edf_file_path'].apply(lambda x: parse_tse_bi(x, db=DB))
     df_candidates = df_candidates.dropna()
     df_candidates.to_csv(candidates_path, index=False, encoding="utf-8")
 
     return data_path, annotation_path, candidates_path
 
 
-def parse_tse_bi(x):
+def parse_tse_bi(x,
+                 db: str = 'tuh'):
     try:
-        split_limit = re.search('[_][s]\w*[.][e][d][f]', x).start()
-        tse_bi_file_path = '.'.join([x[:split_limit], 'tse_bi'])
+        if db == 'tuh':
+            split_limit = re.search('[.][e][d][f]', x).start()
+            tse_bi_file_path = '.'.join([x[:split_limit], 'tse_bi'])
+        else:
+            split_limit = re.search('[_][s]\w*[.][e][d][f]', x).start()
+            tse_bi_file_path = '.'.join([x[:split_limit], 'tse_bi'])
     except:
         tse_bi_file_path = None
 
