@@ -2,7 +2,7 @@ FOLDER_PATH= .
 SRC_PATH=./src
 TEST_PATH=./tests
 
-DATA_PATH=data
+DATA_PATH=data/test_airflow
 EXPORT_PATH=./output
 
 # UTILITIES

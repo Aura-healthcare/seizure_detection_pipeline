@@ -50,6 +50,8 @@ LARGE_WINDOW = 150_000
 
 SEGMENT_SIZE_TRESHOLD = 0.9
 
+AIRFLOW_PREFIX_TO_DATA = '/opt/airflow/'
+
 
 @dag(default_args=DEFAULT_ARGS,
      dag_id='seizure_detection_pipeline',
@@ -164,8 +166,10 @@ def dag_seizure_detection_pipeline():
         qrs_file_path = df_db['edf_file_path'].iloc[index]
         tse_bi_file_path = df_db['annotations_file_path'].iloc[index]
         exam_id = df_db['exam_id'].iloc[index]
-        parameters = {'qrs_file_path': qrs_file_path,
-                      'annotations_file_path': tse_bi_file_path,
+        parameters = {'qrs_file_path': ''.join([AIRFLOW_PREFIX_TO_DATA,
+                                                qrs_file_path]),
+                      'annotations_file_path': ''.join([AIRFLOW_PREFIX_TO_DATA,
+                                                        tse_bi_file_path]),
                       'exam_id': exam_id,
                       'method': DETECT_QRS_METHOD,
                       'rr_intervals_folder': RR_INTERVALS_FOLDER,

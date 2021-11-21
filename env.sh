@@ -36,3 +36,4 @@ export FLOWER_PORT=5555
 
 # DATA PATH
 export DATA_PATH='./data'
+export SYMLINK_FOLDER='test_airflow'
