@@ -5,10 +5,13 @@ Copyright (C) 2021 Association Aura
 SPDX-License-Identifier: GPL-3.0
 """
 import argparse
+from datetime import tzinfo
 import numpy as np
 import pandas as pd
 import sys
 from typing import List
+
+from pandas.core.indexes import interval
 
 sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict, generate_output_path
@@ -51,9 +54,10 @@ def consolidate_feats_and_annot(
         DataFrame including the data from input tse_bi
     """
     df_features = pd.read_csv(features_file_path)
+    print(df_features.columns)
     df_tse_bi = read_tse_bi(annotations_file_path)
 
-    df_features['label'] = df_features['interval_start_time'].apply(
+    df_features['label'] = df_features['timestamp'].apply(
         lambda interval_start_time: get_label_on_interval(
             df_tse_bi=df_tse_bi,
             interval_start_time=interval_start_time,
@@ -65,14 +69,19 @@ def consolidate_feats_and_annot(
             [df_features.index[0], df_features.index[-1]],
             inplace=True)
 
+    input_file_generated = ''.join(
+        [annotations_file_path[:-7],
+         features_file_path[-9:-4],
+         '.tse_bi'])
+
     output_file_path = generate_output_path(
-        input_file_path=annotations_file_path,
+        input_file_path=input_file_generated,
         output_folder=output_folder,
         format='csv',
         prefix='cons')
 
     df_features.to_csv(output_file_path, sep=',', index=False)
-
+    print(output_file_path)
     return output_file_path
 
 
@@ -96,13 +105,14 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
 
     df_tse_bi = pd.read_csv(annotations_file_path,
                             sep=' ',
-                            skiprows=1,
+                            skiprows=4,
                             header=None)
-
     df_tse_bi.columns = ['start', 'end', 'annotation', 'probablility']
-    df_tse_bi.loc[:, ['start', 'end']] = df_tse_bi.loc[:, ['start', 'end']].\
-        apply(lambda x: x * 1_000)
+ #   df_tse_bi.loc[:, ['start', 'end']] = df_tse_bi.loc[:, ['start', 'end']].\
+ #       apply(lambda x: x * 1_000)
 
+    df_tse_bi['start'] = df_tse_bi['start'].apply(lambda x: pd.Timestamp(x))
+    df_tse_bi['end'] = df_tse_bi['end'].apply(lambda x: pd.Timestamp(x))
     return df_tse_bi
 
 
@@ -129,7 +139,8 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
     label_ratio : float
         Ratio of seizure other the segment selected
     """
-    end_marker = interval_start_time + window_interval
+    interval_start_time = np.datetime64(interval_start_time)
+    end_marker = interval_start_time + pd.Timedelta(milliseconds=window_interval)
     df_filtered = df_tse_bi[
         (df_tse_bi['start'] <= interval_start_time)]
 
@@ -138,7 +149,8 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
     df_filtered['end'] = df_filtered['end'].apply(
         lambda x: end_marker if x > end_marker else x)
     df_filtered['length'] = df_filtered['end'] - df_filtered['start']
-    df_filtered = df_filtered.groupby(['annotation']).sum()['length']
+    df_filtered['length'] = df_filtered['length'].apply(lambda x: x.total_seconds())
+    df_filtered = df_filtered.groupby(['annotation']).sum()['length']*1000
 
     try:
         seiz_length = df_filtered['seiz']
@@ -149,7 +161,6 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
         bckg_length = df_filtered['bckg']
     except KeyError:
         bckg_length = 0
-
     if seiz_length + bckg_length <= window_interval * segment_size_treshold:
         label_ratio = np.nan
     else:
