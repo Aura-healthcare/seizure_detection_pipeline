@@ -18,7 +18,9 @@ TUH_EXAM_PATTERN = ".+\\/(.+)\\..+"
 TUH_ANNOTATOR_PATTERN = ""
 EXPORT_FOLDER = "output/db"
 
-DB = 'tuh'
+TEPPE_PATIENT_PATTERN = "[P][A][T][_][1-9]*"
+
+DB = 'teppe'
 
 def write_database(export_folder: str,
                    df_data: pd.DataFrame,
@@ -53,18 +55,37 @@ def write_database(export_folder: str,
     return data_path, annotation_path, candidates_path
 
 
-def parse_tse_bi(x,
+def parse_tse_bi(edf_file_path,
                  db: str = 'tuh'):
     try:
         if db == 'tuh':
-            split_limit = re.search('[.][e][d][f]', x).start()
-            tse_bi_file_path = '.'.join([x[:split_limit], 'tse_bi'])
-        else:
-            split_limit = re.search('[_][s]\w*[.][e][d][f]', x).start()
-            tse_bi_file_path = '.'.join([x[:split_limit], 'tse_bi'])
-    except:
-        tse_bi_file_path = None
+            split_limit = re.search('[.][e][d][f]',
+                                    edf_file_path).start()
+            tse_bi_file_path = '.'.join([edf_file_path[:split_limit],
+                                         'tse_bi'])
 
+        elif db == 'teppe':
+
+            tse_bi_file_path_elements = edf_file_path.split('/')
+
+            tse_bi_folder_path = '/'.join(tse_bi_file_path_elements[:-1])
+            patient_id = tse_bi_file_path_elements[-2]
+            edf_file_name = tse_bi_file_path_elements[-1]
+
+            # removing segment indication and edf from tse_bi_file_name
+            split_limit = re.search('[_][s]\w*[.][e][d][f]',
+                                    edf_file_name).start()
+            tse_bi_file_name = '.'.join([edf_file_name[:split_limit],
+                                         'tse_bi'])
+            tse_bi_file_path = ''.join([
+                tse_bi_folder_path,
+                '/',
+                patient_id,
+                '_Annotations_',
+                tse_bi_file_name])
+
+    except Exception as e:
+        tse_bi_file_path = None
     return tse_bi_file_path
 
 
@@ -72,7 +93,7 @@ def fetch_database(
         data_folder_path: str,
         export_folder: str = EXPORT_FOLDER,
         data_file_pattern: str = TUH_DATA_FILE_PATTERN,
-        patient_pattern: str = TUH_PATIENT_PATTERN,
+        patient_pattern: str = TEPPE_PATIENT_PATTERN,
         exam_pattern: str = TUH_EXAM_PATTERN,
         annotations_file_pattern: str = TUH_ANNOTATIONS_FILE_PATTERN
         ) -> Tuple[str, str, str]:
@@ -98,6 +119,9 @@ def fetch_database(
         patient_str = re.search(patient_pattern, line.decode("utf-8"))
         if patient_str is not None and len(patient_str.groups()) == 1:
             patient_id = patient_str.group(1)
+        else:
+            patient_id = patient_str.group(0)
+
         exam_str = re.search(exam_pattern, line.decode("utf-8"))
         if exam_str is not None and len(exam_str.groups()) == 1:
             exam_id = exam_str.group(1)
@@ -128,6 +152,9 @@ def fetch_database(
         patient_str = re.search(patient_pattern, line.decode("utf-8"))
         if patient_str is not None and len(patient_str.groups()) == 1:
             patient_id = patient_str.group(1)
+        # Case for Teppe data, to refactor
+        else:
+            patient_id = patient_str.group(0)
 
         exam_str = re.search(exam_pattern, line.decode("utf-8"))
         if exam_str is not None and len(exam_str.groups()) == 1:
