@@ -18,7 +18,7 @@ from src.usecase.utilities import convert_args_to_dict, generate_output_path
 
 OUTPUT_FOLDER = 'exports/consolidated_dataset'
 WINDOW_INTERVAL = 10_000
-SEGMENT_SIZE_TRESHOLD = 0.9
+SEGMENT_SIZE_TRESHOLD = 0.5
 
 
 def consolidate_feats_and_annot(
@@ -81,7 +81,6 @@ def consolidate_feats_and_annot(
         prefix='cons')
 
     df_features.to_csv(output_file_path, sep=',', index=False)
-    print(output_file_path)
     return output_file_path
 
 
@@ -142,16 +141,16 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
     interval_start_time = np.datetime64(interval_start_time)
     end_marker = interval_start_time + pd.Timedelta(milliseconds=window_interval)
     df_filtered = df_tse_bi[
-        (df_tse_bi['start'] <= interval_start_time)]
-
-    df_filtered['start'] = df_filtered['start'].apply(
+        (df_tse_bi['start'] < end_marker) &
+        (df_tse_bi['end'] > interval_start_time)
+        ]
+    df_filtered.loc[:, 'start'] = df_filtered['start'].apply(
         lambda x: interval_start_time if x <= interval_start_time else x)
-    df_filtered['end'] = df_filtered['end'].apply(
+    df_filtered.loc[:, 'end'] = df_filtered['end'].apply(
         lambda x: end_marker if x > end_marker else x)
-    df_filtered['length'] = df_filtered['end'] - df_filtered['start']
-    df_filtered['length'] = df_filtered['length'].apply(lambda x: x.total_seconds())
-    df_filtered = df_filtered.groupby(['annotation']).sum()['length']*1000
-
+    df_filtered.loc[:, 'length'] = (df_filtered['end'] - df_filtered['start']).astype('timedelta64[ms]')
+    df_filtered.loc[:, 'length'] = df_filtered['length'].apply(lambda x: x if x > 0 else 0)
+    df_filtered = df_filtered.groupby(['annotation']).sum()['length']
     try:
         seiz_length = df_filtered['seiz']
     except KeyError:
