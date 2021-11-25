@@ -17,7 +17,7 @@ sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict, generate_output_path
 
 OUTPUT_FOLDER = 'exports/consolidated_dataset'
-WINDOW_INTERVAL = 10_000
+WINDOW_INTERVAL = 200
 SEGMENT_SIZE_TRESHOLD = 0.5
 
 
@@ -54,7 +54,6 @@ def consolidate_feats_and_annot(
         DataFrame including the data from input tse_bi
     """
     df_features = pd.read_csv(features_file_path)
-    print(df_features.columns)
     df_tse_bi = read_tse_bi(annotations_file_path)
 
     df_features['label'] = df_features['timestamp'].apply(
@@ -160,13 +159,20 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
         bckg_length = df_filtered['bckg']
     except KeyError:
         bckg_length = 0
-    if seiz_length + bckg_length <= window_interval * segment_size_treshold:
+    try:
+        label_ratio = seiz_length / (seiz_length + bckg_length)
+        label_ratio = int(round(label_ratio, 0))
+    except:
         label_ratio = np.nan
-    else:
-        if bckg_length > 0:
-            label_ratio = seiz_length / (seiz_length + bckg_length)
-        else:
-            label_ratio = np.nan
+
+#    if seiz_length + bckg_length <= window_interval * segment_size_treshold:
+#        label_ratio = np.nan
+#    else:
+#        if bckg_length > 0:
+#            label_ratio = seiz_length / (seiz_length + bckg_length)
+#        else:
+#            label_ratio = np.nan
+
 
     return label_ratio
 
