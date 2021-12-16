@@ -41,7 +41,10 @@ for features_file in $(find $InputDest/* -type f -name "*.csv" ); do
     path=$(echo $features_file | sed "s/$filename//g")
     CleanDest=$(echo $InputDest | sed 's/\//\\\//g')
     relative_path=$(echo $path | sed "s/$CleanDest\///g")
-    tse_bi_filename=$(cut -c7- <<< ${filename%.*}.tse_bi)
+
+    # Teppe Format, to refactore
+    tse_bi_filename=${relative_path::-1}_Annotations_${filename:6:-7}.tse_bi
+    #tse_bi_filename=$(cut -c7- <<< ${filename%.*}.tse_bi)
 
     annotation_file_path=$AnnotDest/$relative_path$tse_bi_filename
 
