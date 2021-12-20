@@ -56,12 +56,19 @@ def consolidate_feats_and_annot(
     df_features = pd.read_csv(features_file_path)
     df_tse_bi = read_tse_bi(annotations_file_path)
 
-    df_features['label'] = df_features['timestamp'].apply(
+    # df_features['label'] = df_features['timestamp'].apply(
+    #     lambda interval_start_time: get_label_on_interval(
+    #         df_tse_bi=df_tse_bi,
+    #         interval_start_time=interval_start_time,
+    #         window_interval=window_interval,
+    #         segment_size_treshold=segment_size_treshold))
+    df_features['label'] = df_features['interval_index'].apply(
         lambda interval_start_time: get_label_on_interval(
             df_tse_bi=df_tse_bi,
             interval_start_time=interval_start_time,
             window_interval=window_interval,
             segment_size_treshold=segment_size_treshold))
+
 
     if crop_dataset:
         df_features.drop(
@@ -100,17 +107,16 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
     if annotations_file_path.split('/')[-1].split('.')[-1] != 'tse_bi':
         raise ValueError(
             f'Please input a tse_bi file. Input: {annotations_file_path}')
-
     df_tse_bi = pd.read_csv(annotations_file_path,
                             sep=' ',
-                            skiprows=4,
+                            skiprows=1,
                             header=None)
     df_tse_bi.columns = ['start', 'end', 'annotation', 'probablility']
  #   df_tse_bi.loc[:, ['start', 'end']] = df_tse_bi.loc[:, ['start', 'end']].\
  #       apply(lambda x: x * 1_000)
 
-    df_tse_bi['start'] = df_tse_bi['start'].apply(lambda x: pd.Timestamp(x))
-    df_tse_bi['end'] = df_tse_bi['end'].apply(lambda x: pd.Timestamp(x))
+   # df_tse_bi['start'] = df_tse_bi['start'].apply(lambda x: pd.Timestamp(x))
+   #  df_tse_bi['end'] = df_tse_bi['end'].apply(lambda x: pd.Timestamp(x))
     return df_tse_bi
 
 
@@ -137,8 +143,12 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
     label_ratio : float
         Ratio of seizure other the segment selected
     """
-    interval_start_time = np.datetime64(interval_start_time)
-    end_marker = interval_start_time + pd.Timedelta(milliseconds=window_interval)
+    try:
+        interval_start_time = np.datetime64(interval_start_time)
+        end_marker = interval_start_time + pd.Timedelta(milliseconds=window_interval)
+    except:
+        end_marker = interval_start_time + window_interval/1_000 #ms
+    
     df_filtered = df_tse_bi[
         (df_tse_bi['start'] < end_marker) &
         (df_tse_bi['end'] > interval_start_time)
@@ -147,7 +157,8 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
         lambda x: interval_start_time if x <= interval_start_time else x)
     df_filtered.loc[:, 'end'] = df_filtered['end'].apply(
         lambda x: end_marker if x > end_marker else x)
-    df_filtered.loc[:, 'length'] = (df_filtered['end'] - df_filtered['start']).astype('timedelta64[ms]')
+    # df_filtered.loc[:, 'length'] = (df_filtered['end'] - df_filtered['start']).astype('timedelta64[ms]')
+    df_filtered.loc[:, 'length'] = (df_filtered['end'] - df_filtered['start'])
     df_filtered.loc[:, 'length'] = df_filtered['length'].apply(lambda x: x if x > 0 else 0)
     df_filtered = df_filtered.groupby(['annotation']).sum()['length']
     try:
