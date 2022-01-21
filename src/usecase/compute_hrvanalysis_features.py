@@ -151,6 +151,12 @@ class compute_features:
                     _rr_on_intervals = self.get_rr_intervals_on_window(
                         index=_index,
                         size=_size)
+
+                    # Handling to improve
+                    if len(_rr_on_intervals) == 0:
+                        print("No RR intervals")
+                        continue
+
                     _clean_rrs = self.get_clean_intervals(_rr_on_intervals)
                     if _size == 'short':
                         self.compute_time_domain_features(_index, _clean_rrs)
@@ -186,9 +192,6 @@ class compute_features:
             self.rr_timestamps < starting_timestamp)
 
         rr_on_intervals = self.rr_intervals[rr_indices]
-
-        if len(rr_on_intervals) == 0:
-            raise ValueError("No RR intervals")
 
         return rr_on_intervals
 
@@ -375,7 +378,7 @@ def compute_hrvanalysis_features(rr_intervals_file_path: str,
     print(df_rr_intervals.head())
     rr_intervals = df_rr_intervals['rr_interval'].values
     rr_timestamps = np.cumsum(rr_intervals)
-    start_timestamp = df_rr_intervals['timestamp'].values[0] # MODIFY
+    start_timestamp = df_rr_intervals['timestamp'].values[0]  # MODIFY
     print(start_timestamp)
 
     features_computer = compute_features(
@@ -392,7 +395,8 @@ def compute_hrvanalysis_features(rr_intervals_file_path: str,
         columns=features_key_to_index)
 
     df_features['timestamp'] = df_features['interval_start_time'].apply(
-        lambda x: pd.Timestamp(start_timestamp, tz=None) + pd.Timedelta(x, unit='milliseconds'))
+        lambda x: pd.Timestamp(start_timestamp, tz=None)
+        + pd.Timedelta(x, unit='milliseconds'))
 
     # EXPORT
     output_file_path = generate_output_path(
