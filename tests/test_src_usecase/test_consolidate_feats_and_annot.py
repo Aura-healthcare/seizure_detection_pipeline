@@ -10,8 +10,12 @@ from src.usecase.utilities import convert_args_to_dict
 
 OUTPUT_FOLDER = 'tests/output/features'
 FEATURES_FILE_PATH = 'data/test_data/feats_00009578_s006_t001.csv'
-ANNOTATIONS_FILE_PATH = \
+ANNOTATIONS_FILE_PATH_TUH = \
     'data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.tse_bi'
+ANNOTATIONS_FILE_PATH_TEPPE= \
+    'data/test_data/Teppe_format_PAT_24_Annotations_EEG_48.tse_bi'
+ANNOTATIONS_FILE_PATH_INCORRECT = \
+    'data/test_data/rr_00007633_s003_t007.csv'
 WINDOW_INTERVAL= 10_000
 SEGMENT_SIZE_TRESHOLD = 0.9
 CROPPED_DATASET = True
@@ -21,7 +25,7 @@ NO_BCKG_TSE_BI_PATH = 'data/test_data/no_bckg_00009578_s006_t001.tse_bi'
 def generate_consolidated_features_and_annot(cropped: bool):
     returned_path = consolidate_feats_and_annot(
         features_file_path=FEATURES_FILE_PATH,
-        annotations_file_path=ANNOTATIONS_FILE_PATH,
+        annotations_file_path=ANNOTATIONS_FILE_PATH_TUH,
         output_folder=OUTPUT_FOLDER,
         window_interval=WINDOW_INTERVAL,
         segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
@@ -78,7 +82,7 @@ def test_tuh_parse_consolidate_feats_and_annot_args():
 
     bash_command = (f'python3 src/usecase/detect_qrs.py '
                     f'--features-file-path {FEATURES_FILE_PATH} '
-                    f'--annotations-file-path {ANNOTATIONS_FILE_PATH} '
+                    f'--annotations-file-path {ANNOTATIONS_FILE_PATH_TUH} '
                     f'--output-folder {OUTPUT_FOLDER} '
                     f'--window-interval {WINDOW_INTERVAL} '
                     f'--segment-size-treshold {SEGMENT_SIZE_TRESHOLD} '
@@ -89,7 +93,7 @@ def test_tuh_parse_consolidate_feats_and_annot_args():
 
     correct_parser = argparse.Namespace(
         features_file_path=FEATURES_FILE_PATH,
-        annotations_file_path=ANNOTATIONS_FILE_PATH,
+        annotations_file_path=ANNOTATIONS_FILE_PATH_TUH,
         output_folder=OUTPUT_FOLDER,
         window_interval=WINDOW_INTERVAL,
         segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
@@ -102,15 +106,15 @@ def test_tuh_parse_consolidate_feats_and_annot_args():
 def test_get_label_on_interval():
     pass
 
-def test_input_read_tse_bi_test(
-    annotations_file_path_correct = ANNOTATIONS_FILE_PATH,
-    annotations_file_path_incorrect = \
-        'data/test_data/rr_00007633_s003_t007.csv'):
+def test_input_read_tse_bi_test():
 
-    read_tse_bi(annotations_file_path_correct)
+    read_tse_bi(ANNOTATIONS_FILE_PATH_TUH)
+    assert True
+
+    read_tse_bi(ANNOTATIONS_FILE_PATH_TEPPE)
     assert True
 
     try:
-        read_tse_bi(annotations_file_path_incorrect)
+        read_tse_bi(ANNOTATIONS_FILE_PATH_INCORRECT)
     except ValueError:
         assert True

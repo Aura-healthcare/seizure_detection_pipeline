@@ -94,6 +94,9 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
     """
     Create a pd.DataFrame form a tse_bi file.
 
+    As in tse_bi stanadard an empty line seperates the data from the file
+    headers, the first empty line is used to infer where data starts.
+
     Parameters
     ----------
     annotations_file_path : str
@@ -107,16 +110,40 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
     if annotations_file_path.split('/')[-1].split('.')[-1] != 'tse_bi':
         raise ValueError(
             f'Please input a tse_bi file. Input: {annotations_file_path}')
+    # La teppe format, which is slightly different
+    try:
+        df_search_empty_line = pd.read_csv(annotations_file_path,
+                                       skip_blank_lines=False,
+                                       sep=' ',
+                                       header=None)
+        database_format = 'teppe'
+    except Exception:
+        df_search_empty_line = pd.read_csv(annotations_file_path,
+                                           skip_blank_lines=False,
+                                           header=None)
+        database_format = 'tuh'
+
+    first_empty_line_index = df_search_empty_line[
+    df_search_empty_line.isnull().all(1)].index[0]
+
     df_tse_bi = pd.read_csv(annotations_file_path,
                             sep=' ',
-                            skiprows=1,
+                            skiprows=first_empty_line_index,
                             header=None)
-    df_tse_bi.columns = ['start', 'end', 'annotation', 'probablility']
- #   df_tse_bi.loc[:, ['start', 'end']] = df_tse_bi.loc[:, ['start', 'end']].\
- #       apply(lambda x: x * 1_000)
 
-   # df_tse_bi['start'] = df_tse_bi['start'].apply(lambda x: pd.Timestamp(x))
-   #  df_tse_bi['end'] = df_tse_bi['end'].apply(lambda x: pd.Timestamp(x))
+    df_tse_bi.columns = ['start', 'end', 'annotation', 'probablility']
+
+    if database_format == 'teppe':
+        df_tse_bi['start'] = df_tse_bi['start'].apply(
+            lambda x: pd.Timestamp(x))
+        df_tse_bi['end'] = df_tse_bi['end'].apply(
+            lambda x: pd.Timestamp(x))
+
+    else:
+        df_tse_bi.loc[:, ['start', 'end']] = df_tse_bi.loc[
+            :, ['start', 'end']].apply(lambda x: x * 1_000)
+
+
     return df_tse_bi
 
 
