@@ -375,11 +375,9 @@ def compute_hrvanalysis_features(rr_intervals_file_path: str,
     """
     df_rr_intervals = pd.read_csv(
         os.path.join(rr_intervals_file_path))
-    print(df_rr_intervals.head())
     rr_intervals = df_rr_intervals['rr_interval'].values
     rr_timestamps = np.cumsum(rr_intervals)
     start_timestamp = df_rr_intervals['timestamp'].values[0]  # MODIFY
-    print(start_timestamp)
 
     features_computer = compute_features(
         rr_timestamps=rr_timestamps,
