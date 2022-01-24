@@ -5,13 +5,10 @@ Copyright (C) 2021 Association Aura
 SPDX-License-Identifier: GPL-3.0
 """
 import argparse
-from datetime import tzinfo
 import numpy as np
 import pandas as pd
 import sys
 from typing import List
-
-from pandas.core.indexes import interval
 
 sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict, generate_output_path
@@ -69,7 +66,6 @@ def consolidate_feats_and_annot(
             window_interval=window_interval,
             segment_size_treshold=segment_size_treshold))
 
-
     if crop_dataset:
         df_features.drop(
             [df_features.index[0], df_features.index[-1]],
@@ -112,11 +108,14 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
             f'Please input a tse_bi file. Input: {annotations_file_path}')
     # La teppe format, which is slightly different
     try:
-        df_search_empty_line = pd.read_csv(annotations_file_path,
-                                       skip_blank_lines=False,
-                                       sep=' ',
-                                       header=None)
+        df_search_empty_line = pd.read_csv(
+            annotations_file_path,
+            skip_blank_lines=False,
+            sep=' ',
+            header=None)
+
         database_format = 'teppe'
+
     except Exception:
         df_search_empty_line = pd.read_csv(annotations_file_path,
                                            skip_blank_lines=False,
@@ -124,7 +123,7 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
         database_format = 'tuh'
 
     first_empty_line_index = df_search_empty_line[
-    df_search_empty_line.isnull().all(1)].index[0]
+        df_search_empty_line.isnull().all(1)].index[0]
 
     df_tse_bi = pd.read_csv(annotations_file_path,
                             sep=' ',
@@ -142,7 +141,6 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
     else:
         df_tse_bi.loc[:, ['start', 'end']] = df_tse_bi.loc[
             :, ['start', 'end']].apply(lambda x: x * 1_000)
-
 
     return df_tse_bi
 
@@ -170,16 +168,19 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
     label_ratio : float
         Ratio of seizure other the segment selected
     """
+    # La teppe
     try:
         interval_start_time = np.datetime64(interval_start_time)
-        end_marker = interval_start_time + pd.Timedelta(milliseconds=window_interval)
-    except:
-        end_marker = interval_start_time + window_interval/1_000 #ms
-    
+        end_marker = interval_start_time + \
+            pd.Timedelta(milliseconds=window_interval)
+    # TUH
+    except Exception:
+        end_marker = interval_start_time + window_interval / 1_000  # ms
+
     df_filtered = df_tse_bi[
-        (df_tse_bi['start'] < end_marker) &
-        (df_tse_bi['end'] > interval_start_time)
-        ]
+        (df_tse_bi['start'] < end_marker) & (
+            df_tse_bi['end'] > interval_start_time)]
+
     df_filtered.loc[:, 'start'] = df_filtered['start'].apply(
         lambda x: interval_start_time if x <= interval_start_time else x)
     df_filtered.loc[:, 'end'] = df_filtered['end'].apply(
@@ -210,7 +211,6 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
 #            label_ratio = seiz_length / (seiz_length + bckg_length)
 #        else:
 #            label_ratio = np.nan
-
 
     return label_ratio
 
