@@ -59,7 +59,7 @@ def consolidate_feats_and_annot(
     #         interval_start_time=interval_start_time,
     #         window_interval=window_interval,
     #         segment_size_treshold=segment_size_treshold))
-    df_features['label'] = df_features['interval_index'].apply(
+    df_features['label'] = df_features['timestamp'].apply(
         lambda interval_start_time: get_label_on_interval(
             df_tse_bi=df_tse_bi,
             interval_start_time=interval_start_time,
@@ -107,28 +107,14 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
         raise ValueError(
             f'Please input a tse_bi file. Input: {annotations_file_path}')
     # La teppe format, which is slightly different
-    try:
-        df_search_empty_line = pd.read_csv(
+    df_tse_bi = pd.read_csv(
             annotations_file_path,
+            skiprows=4,
             skip_blank_lines=False,
             sep=' ',
             header=None)
 
-        database_format = 'teppe'
-
-    except Exception:
-        df_search_empty_line = pd.read_csv(annotations_file_path,
-                                           skip_blank_lines=False,
-                                           header=None)
-        database_format = 'tuh'
-
-    first_empty_line_index = df_search_empty_line[
-        df_search_empty_line.isnull().all(1)].index[0]
-
-    df_tse_bi = pd.read_csv(annotations_file_path,
-                            sep=' ',
-                            skiprows=first_empty_line_index,
-                            header=None)
+    database_format = 'teppe'
 
     df_tse_bi.columns = ['start', 'end', 'annotation', 'probablility']
 
@@ -187,7 +173,10 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
         lambda x: end_marker if x > end_marker else x)
     # df_filtered.loc[:, 'length'] = (df_filtered['end'] - df_filtered['start']).astype('timedelta64[ms]')
     df_filtered.loc[:, 'length'] = (df_filtered['end'] - df_filtered['start'])
-    df_filtered.loc[:, 'length'] = df_filtered['length'].apply(lambda x: x if x > 0 else 0)
+    try:
+        df_filtered.loc[:, 'length'] = df_filtered['length'].apply(lambda x: x if x > 0 else 0)
+    except:
+        df_filtered.loc[:, 'length'] = df_filtered['length'].apply(lambda x: x.total_seconds() if x > pd.Timedelta(0) else 0)
     df_filtered = df_filtered.groupby(['annotation']).sum()['length']
     try:
         seiz_length = df_filtered['seiz']
