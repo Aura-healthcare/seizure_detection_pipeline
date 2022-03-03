@@ -26,6 +26,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score, recall_score,\
     roc_auc_score, precision_score, confusion_matrix, ConfusionMatrixDisplay
 from sklearn.ensemble import RandomForestClassifier
+from imblearn.over_sampling import RandomOverSampler
 from typing import List
 
 sys.path.append('.')
@@ -158,6 +159,7 @@ def clean_ml_dataset(df_ml: pd.DataFrame,
         The clean ml dataset
     """
     print(f'Lines before Nan removal : {df_ml.shape[0]}')
+    df_ml.replace([np.inf, -np.inf], np.nan, inplace=True)
     df_ml = df_ml.dropna()
     print(f'Lines after Nan removal : {df_ml.shape[0]}')
 
@@ -188,12 +190,11 @@ def train_model(ml_dataset_path: str,
     mlflow.set_tracking_uri(tracking_uri)
 
     with mlflow.start_run():
-
         df_ml = pd.read_csv(ml_dataset_path)
-        df_ml = clean_ml_dataset(df_ml, treshold=0.5)
+        df_ml = clean_ml_dataset(df_ml, target_treshold=0.5)
 
-        X = df_ml.iloc[:, :-1]
-        y = df_ml.iloc[:, -1]
+        y = df_ml['label']
+        X = df_ml.drop('label', 1).drop('timestamp', 1)
 
         # Making train and test variables
         X_train, X_test, y_train, y_test = train_test_split(
@@ -206,6 +207,9 @@ def train_model(ml_dataset_path: str,
         X_test = X_test.values
         y_train = y_train.values
         y_test = y_test.values
+
+        ros = RandomOverSampler(random_state=42)
+        X, y = ros.fit_resample(X_train, y_train)
 
         # Model Training
         grid_search = GridSearchCV(estimator=model_param['model'],
