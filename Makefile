@@ -2,7 +2,7 @@ FOLDER_PATH= .
 SRC_PATH=./src
 TEST_PATH=./tests
 
-DATA_PATH=data/test_airflow
+DATA_PATH=data/tuh/
 EXPORT_PATH=./output
 
 # UTILITIES
@@ -41,7 +41,7 @@ fetch_data:
 # PYTHON SCRIPT ON INDIVIDUAL FILES
 individual_detect_qrs:
 	. $(FOLDER_PATH)/env/bin/activate; \
-	python3 src/usecase/detect_qrs.py --qrs-file-path $(DATA_PATH)/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.edf --method hamilton --exam-id 00009578_s006_t001 --output-folder $(EXPORT_PATH)/individual/res-v0_6
+	python3 src/usecase/detect_qrs.py --qrs-file-path $(DATA_PATH)/002/00009578/00009578_s006_t001.edf --method hamilton --exam-id 00009578_s006_t001 --output-folder $(EXPORT_PATH)/individual/res-v0_6
 
 individual_compute_hrvanalysis_features:
 	. $(FOLDER_PATH)/env/bin/activate; \
@@ -84,3 +84,14 @@ create_ml_dataset:
 train:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	python3 src/usecase/train_model.py --ml-dataset-path $(EXPORT_PATH)/ml_dataset/df_ml.csv
+
+## VISUALIZATION 
+# ------------------
+load_ecg:
+	python3 visualization/ecg_data_loader.py --pg-host localhost --pg-port 5432 --pg-user postgres --pg-password postgres --pg-database postgres --filepath data/tuh/dev/01_tcp_ar/076/00007633/s003_2013_07_09/00007633_s003_t007.edf
+
+load_rr:
+	python3 visualization/rr_intervals_loader.py --pg-host localhost --pg-port 5432 --pg-user postgres --pg-password postgres --pg-database postgres --filepath data/test_data/rr_00007633_s003_t007.csv --exam 00007633_s003_t007
+
+load_annotations:
+	python3 visualization/annotations_loader.py --pg-host localhost --pg-port 5432 --pg-user postgres --pg-password postgres --pg-database postgres --annotation-filename data/tuh/dev/01_tcp_ar/076/00007633/s003_2013_07_09/00007633_s003_t007.tse_bi --edf-filename data/tuh/dev/01_tcp_ar/076/00007633/s003_2013_07_09/00007633_s003_t007.edf --exam 00007633_s003_t010
