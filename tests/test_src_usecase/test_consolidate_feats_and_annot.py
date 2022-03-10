@@ -103,8 +103,10 @@ def test_tuh_parse_consolidate_feats_and_annot_args():
 
     assert(parser_dict == correct_parser_dict)
 
+
 def test_get_label_on_interval():
     pass
+
 
 def test_input_read_tse_bi_test():
 

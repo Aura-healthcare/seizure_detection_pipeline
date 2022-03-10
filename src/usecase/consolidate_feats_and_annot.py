@@ -53,18 +53,31 @@ def consolidate_feats_and_annot(
     df_features = pd.read_csv(features_file_path)
     df_tse_bi = read_tse_bi(annotations_file_path)
 
-    # df_features['label'] = df_features['timestamp'].apply(
-    #     lambda interval_start_time: get_label_on_interval(
-    #         df_tse_bi=df_tse_bi,
-    #         interval_start_time=interval_start_time,
-    #         window_interval=window_interval,
-    #         segment_size_treshold=segment_size_treshold))
-    df_features['label'] = df_features['timestamp'].apply(
-        lambda interval_start_time: get_label_on_interval(
-            df_tse_bi=df_tse_bi,
-            interval_start_time=interval_start_time,
-            window_interval=window_interval,
-            segment_size_treshold=segment_size_treshold))
+    # La Teppe tse_bi format
+    if type(df_tse_bi['start'].iloc[0]) == pd.Timestamp:
+        df_tse_bi['start'] = df_tse_bi['start'].apply(
+            lambda x: pd.Timestamp(x))
+        df_tse_bi['end'] = df_tse_bi['end'].apply(
+            lambda x: pd.Timestamp(x))
+        df_features['label'] = df_features['timestamp'].apply(
+            lambda interval_start_time: get_label_on_interval(
+                df_tse_bi=df_tse_bi,
+                interval_start_time=interval_start_time,
+                window_interval=window_interval,
+                segment_size_treshold=segment_size_treshold))
+
+    # Tuh tse_bi format
+    elif df_tse_bi['start'].iloc[0] == 0:
+        df_tse_bi.loc[:, ['start', 'end']] = df_tse_bi.loc[
+            :, ['start', 'end']].apply(lambda x: x * 1_000)
+        df_features['label'] = df_features['interval_start_time'].apply(
+            lambda interval_start_time: get_label_on_interval(
+                df_tse_bi=df_tse_bi,
+                interval_start_time=interval_start_time,
+                window_interval=window_interval,
+                segment_size_treshold=segment_size_treshold))
+    else:
+        raise ValueError('Specific tse_bi format is incorrect')
 
     if crop_dataset:
         df_features.drop(
@@ -83,6 +96,7 @@ def consolidate_feats_and_annot(
         prefix='cons')
 
     df_features.to_csv(output_file_path, sep=',', index=False)
+
     return output_file_path
 
 
@@ -90,7 +104,7 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
     """
     Create a pd.DataFrame form a tse_bi file.
 
-    As in tse_bi stanadard an empty line seperates the data from the file
+    As in tse_bi standard an empty line seperates the data from the file
     headers, the first empty line is used to infer where data starts.
 
     Parameters
@@ -107,26 +121,21 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
         raise ValueError(
             f'Please input a tse_bi file. Input: {annotations_file_path}')
     # La teppe format, which is slightly different
+
+    with open(annotations_file_path, 'r') as annotations_file:
+        first_empty_line = 0
+        for line in annotations_file:
+            first_empty_line += 1
+            if line in ['\n', 'r\n', '   \n']:
+                break
+
     df_tse_bi = pd.read_csv(
-            annotations_file_path,
-            skiprows=4,
-            skip_blank_lines=False,
-            sep=' ',
-            header=None)
-
-    database_format = 'teppe'
-
+        annotations_file_path,
+        skiprows=first_empty_line,
+        skip_blank_lines=False,
+        sep=' ',
+        header=None)
     df_tse_bi.columns = ['start', 'end', 'annotation', 'probablility']
-
-    if database_format == 'teppe':
-        df_tse_bi['start'] = df_tse_bi['start'].apply(
-            lambda x: pd.Timestamp(x))
-        df_tse_bi['end'] = df_tse_bi['end'].apply(
-            lambda x: pd.Timestamp(x))
-
-    else:
-        df_tse_bi.loc[:, ['start', 'end']] = df_tse_bi.loc[
-            :, ['start', 'end']].apply(lambda x: x * 1_000)
 
     return df_tse_bi
 
@@ -171,12 +180,13 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
         lambda x: interval_start_time if x <= interval_start_time else x)
     df_filtered.loc[:, 'end'] = df_filtered['end'].apply(
         lambda x: end_marker if x > end_marker else x)
-    # df_filtered.loc[:, 'length'] = (df_filtered['end'] - df_filtered['start']).astype('timedelta64[ms]')
     df_filtered.loc[:, 'length'] = (df_filtered['end'] - df_filtered['start'])
     try:
-        df_filtered.loc[:, 'length'] = df_filtered['length'].apply(lambda x: x if x > 0 else 0)
+        df_filtered.loc[:, 'length'] = df_filtered['length'].apply(
+            lambda x: x if x > 0 else 0)
     except:
-        df_filtered.loc[:, 'length'] = df_filtered['length'].apply(lambda x: x.total_seconds() if x > pd.Timedelta(0) else 0)
+        df_filtered.loc[:, 'length'] = df_filtered['length'].apply(
+            lambda x: x.total_seconds() if x > pd.Timedelta(0) else 0)
     df_filtered = df_filtered.groupby(['annotation']).sum()['length']
     try:
         seiz_length = df_filtered['seiz']
@@ -192,14 +202,6 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
         label_ratio = int(round(label_ratio, 0))
     except:
         label_ratio = np.nan
-
-#    if seiz_length + bckg_length <= window_interval * segment_size_treshold:
-#        label_ratio = np.nan
-#    else:
-#        if bckg_length > 0:
-#            label_ratio = seiz_length / (seiz_length + bckg_length)
-#        else:
-#            label_ratio = np.nan
 
     return label_ratio
 
