@@ -163,31 +163,40 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
     label_ratio : float
         Ratio of seizure other the segment selected
     """
+    # Setting markers in datetime
     # La teppe
     try:
         interval_start_time = np.datetime64(interval_start_time)
         end_marker = interval_start_time + \
             pd.Timedelta(milliseconds=window_interval)
     # TUH
-    except Exception:
+    except ValueError:
         end_marker = interval_start_time + window_interval / 1_000  # ms
 
+    # Limiting the dataframe
     df_filtered = df_tse_bi[
         (df_tse_bi['start'] < end_marker) & (
             df_tse_bi['end'] > interval_start_time)]
 
+    # Filtering over intervals
     df_filtered.loc[:, 'start'] = df_filtered['start'].apply(
         lambda x: interval_start_time if x <= interval_start_time else x)
     df_filtered.loc[:, 'end'] = df_filtered['end'].apply(
         lambda x: end_marker if x > end_marker else x)
     df_filtered.loc[:, 'length'] = (df_filtered['end'] - df_filtered['start'])
+
+    # Setting negative length at 0
     try:
         df_filtered.loc[:, 'length'] = df_filtered['length'].apply(
-            lambda x: x if x > 0 else 0)
-    except:
-        df_filtered.loc[:, 'length'] = df_filtered['length'].apply(
             lambda x: x.total_seconds() if x > pd.Timedelta(0) else 0)
+    except TypeError:
+        df_filtered.loc[:, 'length'] = df_filtered['length'].apply(
+            lambda x: x if x > 0 else 0)
+
+    # Checking checking the duration by seiz/bckg annotations
     df_filtered = df_filtered.groupby(['annotation']).sum()['length']
+
+    # Computing the size of each class, then label
     try:
         seiz_length = df_filtered['seiz']
     except KeyError:
@@ -197,10 +206,11 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
         bckg_length = df_filtered['bckg']
     except KeyError:
         bckg_length = 0
+
     try:
         label_ratio = seiz_length / (seiz_length + bckg_length)
         label_ratio = int(round(label_ratio, 0))
-    except:
+    except ValueError:
         label_ratio = np.nan
 
     return label_ratio
