@@ -51,18 +51,17 @@ def consolidate_feats_and_annot(
         DataFrame including the data from input tse_bi
     """
     # Delete crop_dataset ?
-    # check for the * 1000
     # Convert tse_bi of TUH by adding the start of df_features
-    # Convert 
     df_features = pd.read_csv(features_file_path)
     df_tse_bi = read_tse_bi(annotations_file_path)
 
+    df_tse_bi['start'] = df_tse_bi['start'].apply(
+            lambda x: pd.Timestamp(x))
+    df_tse_bi['end'] = df_tse_bi['end'].apply(
+            lambda x: pd.Timestamp(x))
+
     # La Teppe tse_bi format
-    if type(df_tse_bi['start'].iloc[0]) == pd.Timestamp:
-        df_tse_bi['start'] = df_tse_bi['start'].apply(
-            lambda x: pd.Timestamp(x))
-        df_tse_bi['end'] = df_tse_bi['end'].apply(
-            lambda x: pd.Timestamp(x))
+    if df_tse_bi['start'].iloc[0] > np.datetime64(1, 's'):
         df_features['label'] = df_features['timestamp'].apply(
             lambda interval_start_time: get_label_on_interval(
                 df_tse_bi=df_tse_bi,
@@ -71,18 +70,13 @@ def consolidate_feats_and_annot(
                 segment_size_treshold=segment_size_treshold))
 
     # Tuh tse_bi format
-    elif df_tse_bi['start'].iloc[0] == 0:
-        print(df_tse_bi)
-        df_tse_bi.loc[:, ['start', 'end']] = df_tse_bi.loc[
-            :, ['start', 'end']].apply(lambda x: x * 1_000)
+    else:
         df_features['label'] = df_features['interval_start_time'].apply(
             lambda interval_start_time: get_label_on_interval(
                 df_tse_bi=df_tse_bi,
                 interval_start_time=interval_start_time,
                 window_interval=window_interval,
                 segment_size_treshold=segment_size_treshold))
-    else:
-        raise ValueError('Specific tse_bi format is incorrect')
 
     if crop_dataset:
         df_features.drop(
