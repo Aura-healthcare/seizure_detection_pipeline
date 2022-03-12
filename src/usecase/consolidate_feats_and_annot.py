@@ -100,7 +100,8 @@ def consolidate_feats_and_annot(
     return output_file_path
 
 
-def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
+def read_tse_bi(annotations_file_path: str,
+                convert_to_timestamp: bool = True) -> pd.DataFrame:
     """
     Create a pd.DataFrame form a tse_bi file.
 
@@ -163,65 +164,55 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
     label_ratio : float
         Ratio of seizure other the segment selected
     """
-    # Setting markers in datetime
-    # La teppe
-    # To do: make same way of working with both
-
-    # IDEA : Transorm all floats in timetamps to handle the same
+    # Converting interval_start_time to np.datetime64
     try:
         interval_start_time = np.datetime64(interval_start_time)
 
     except ValueError:
-        interval_start_time = np.datetime64(int(interval_start_time*1000), 'ms')
+        interval_start_time = np.datetime64(int(interval_start_time*1000),
+                                            'ms')
 
-    df_tse_bi.loc[:, 'start'] = df_tse_bi['start'].apply(lambda x:
-                                                             np.datetime64(int(x*1000),
-                                                                           'ms')
-                                                             if np.isscalar(x)
-                                                                           else
-                                                                           x)
-    df_tse_bi.loc[:, 'end'] = df_tse_bi['end'].apply(lambda x:
-                                                             np.datetime64(int(x*1000),
-                                                                           'ms')
-                                                             if np.isscalar(x)
-                                                                           else
-                                                                           x)
+    # Computing end marker
     end_marker = interval_start_time + \
         pd.Timedelta(milliseconds=window_interval)
 
-    # Limiting the dataframe
-    df_filtered = df_tse_bi
-    # if df_filtered.shape[0] > 1:
-    #     df_filtered = df_tse_bi[
-    #     (df_tse_bi['start'] < end_marker) & (
-    #         df_tse_bi['end'] > interval_start_time)]
+    # converting tse_bi to timestamps
+    df_tse_bi.loc[:, 'start'] = df_tse_bi['start'].apply(lambda x:
+                                                         np.datetime64(
+                                                             int(x*1000),
+                                                             'ms')
+                                                         if np.isscalar(x)
+                                                         else x)
+
+    df_tse_bi.loc[:, 'end'] = df_tse_bi['end'].apply(lambda x:
+                                                     np.datetime64(
+                                                             int(x*1000),
+                                                             'ms')
+                                                     if np.isscalar(x)
+                                                     else x)
 
     # Filtering over intervals
-    df_filtered.loc[:, 'start'] = df_filtered['start'].apply(
+    df_tse_bi.loc[:, 'start'] = df_tse_bi['start'].apply(
         lambda x: interval_start_time if x <= interval_start_time else x)
-    df_filtered.loc[:, 'end'] = df_filtered['end'].apply(
+    df_tse_bi.loc[:, 'end'] = df_tse_bi['end'].apply(
         lambda x: end_marker if x > end_marker else x)
-    df_filtered.loc[:, 'length'] = (df_filtered['end'] - df_filtered['start'])
+    df_tse_bi.loc[:, 'length'] = (df_tse_bi['end'] - df_tse_bi['start'])
 
     # Setting negative length at 0
-    try:
-        df_filtered.loc[:, 'length'] = df_filtered['length'].apply(
+    df_tse_bi.loc[:, 'length'] = df_tse_bi['length'].apply(
             lambda x: x.total_seconds() if x > pd.Timedelta(0) else 0)
-    except TypeError:
-        df_filtered.loc[:, 'length'] = df_filtered['length'].apply(
-            lambda x: x if x > 0 else 0)
 
     # Checking checking the duration by seiz/bckg annotations
-    df_filtered = df_filtered.groupby(['annotation']).sum()['length']
+    df_tse_bi = df_tse_bi.groupby(['annotation']).sum()['length']
 
     # Computing the size of each class, then label
     try:
-        seiz_length = df_filtered['seiz']
+        seiz_length = df_tse_bi['seiz']
     except KeyError:
         seiz_length = 0
 
     try:
-        bckg_length = df_filtered['bckg']
+        bckg_length = df_tse_bi['bckg']
     except KeyError:
         bckg_length = 0
 
