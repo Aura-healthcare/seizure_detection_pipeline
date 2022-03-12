@@ -165,18 +165,36 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
     """
     # Setting markers in datetime
     # La teppe
+    # To do: make same way of working with both
+
+    # IDEA : Transorm all floats in timetamps to handle the same
     try:
         interval_start_time = np.datetime64(interval_start_time)
-        end_marker = interval_start_time + \
-            pd.Timedelta(milliseconds=window_interval)
-    # TUH
+
     except ValueError:
-        end_marker = interval_start_time + window_interval / 1_000  # ms
+        interval_start_time = np.datetime64(int(interval_start_time*1000), 'ms')
+
+    df_tse_bi.loc[:, 'start'] = df_tse_bi['start'].apply(lambda x:
+                                                             np.datetime64(int(x*1000),
+                                                                           'ms')
+                                                             if np.isscalar(x)
+                                                                           else
+                                                                           x)
+    df_tse_bi.loc[:, 'end'] = df_tse_bi['end'].apply(lambda x:
+                                                             np.datetime64(int(x*1000),
+                                                                           'ms')
+                                                             if np.isscalar(x)
+                                                                           else
+                                                                           x)
+    end_marker = interval_start_time + \
+        pd.Timedelta(milliseconds=window_interval)
 
     # Limiting the dataframe
-    df_filtered = df_tse_bi[
-        (df_tse_bi['start'] < end_marker) & (
-            df_tse_bi['end'] > interval_start_time)]
+    df_filtered = df_tse_bi
+    # if df_filtered.shape[0] > 1:
+    #     df_filtered = df_tse_bi[
+    #     (df_tse_bi['start'] < end_marker) & (
+    #         df_tse_bi['end'] > interval_start_time)]
 
     # Filtering over intervals
     df_filtered.loc[:, 'start'] = df_filtered['start'].apply(
