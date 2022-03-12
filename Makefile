@@ -23,6 +23,11 @@ test:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	pytest -s -vvv $(TEST_PATH)
 
+test_conso:
+	. $(FOLDER_PATH)/env/bin/activate; \
+		pytest -s -vvv $(TEST_PATH)/test_src_usecase/test_consolidate_feats_and_annot.py
+
+
 coverage:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	pytest --cov=$(SRC_PATH) --cov-report html $(TEST_PATH)

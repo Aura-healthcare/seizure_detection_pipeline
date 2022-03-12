@@ -50,6 +50,10 @@ def consolidate_feats_and_annot(
     df_tse_bi : pd.DataFrame
         DataFrame including the data from input tse_bi
     """
+    # Delete crop_dataset ?
+    # check for the * 1000
+    # Convert tse_bi of TUH by adding the start of df_features
+    # Convert 
     df_features = pd.read_csv(features_file_path)
     df_tse_bi = read_tse_bi(annotations_file_path)
 
@@ -68,6 +72,7 @@ def consolidate_feats_and_annot(
 
     # Tuh tse_bi format
     elif df_tse_bi['start'].iloc[0] == 0:
+        print(df_tse_bi)
         df_tse_bi.loc[:, ['start', 'end']] = df_tse_bi.loc[
             :, ['start', 'end']].apply(lambda x: x * 1_000)
         df_features['label'] = df_features['interval_start_time'].apply(
@@ -100,8 +105,7 @@ def consolidate_feats_and_annot(
     return output_file_path
 
 
-def read_tse_bi(annotations_file_path: str,
-                convert_to_timestamp: bool = True) -> pd.DataFrame:
+def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
     """
     Create a pd.DataFrame form a tse_bi file.
 
@@ -136,6 +140,7 @@ def read_tse_bi(annotations_file_path: str,
         skip_blank_lines=False,
         sep=' ',
         header=None)
+
     df_tse_bi.columns = ['start', 'end', 'annotation', 'probablility']
 
     return df_tse_bi
@@ -169,7 +174,7 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
         interval_start_time = np.datetime64(interval_start_time)
 
     except ValueError:
-        interval_start_time = np.datetime64(int(interval_start_time*1000),
+        interval_start_time = np.datetime64(int(interval_start_time),
                                             'ms')
 
     # Computing end marker

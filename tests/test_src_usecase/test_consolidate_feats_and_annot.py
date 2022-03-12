@@ -9,23 +9,30 @@ from src.usecase.consolidate_feats_and_annot import \
 from src.usecase.utilities import convert_args_to_dict
 
 OUTPUT_FOLDER = 'tests/output/features'
-FEATURES_FILE_PATH = 'data/test_data/feats_00009578_s006_t001.csv'
-ANNOTATIONS_FILE_PATH_TUH = \
+
+TUH_FEATURES_FILE_PATH = 'data/test_data/tuh_feats_00009578_s006_t001.csv'
+TUH_ANNOTATIONS_FILE_PATH = \
     'data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.tse_bi'
-ANNOTATIONS_FILE_PATH_TEPPE= \
-    'data/test_data/Teppe_format_PAT_24_Annotations_EEG_48.tse_bi'
-ANNOTATIONS_FILE_PATH_INCORRECT = \
-    'data/test_data/rr_00007633_s003_t007.csv'
+TUH_ANNOTATIONS_FILE_PATH_INCORRECT = \
+    'data/test_data/tuh_rr_00007633_s003_t007.csv'
+
+TEPPE_FEATURES_FILE_PATH = \
+    'data/test_data/teppe_feats_PAT_0_Annotations_EEG_0_s2.csv'
+TEPPE_ANNOTATIONS_FILE_PATH= \
+    'data/test_data/teppe_PAT_0_Annotations_EEG_0.tse_bi'
+
 WINDOW_INTERVAL= 10_000
 SEGMENT_SIZE_TRESHOLD = 0.9
 CROPPED_DATASET = True
-NO_BCKG_TSE_BI_PATH = 'data/test_data/no_bckg_00009578_s006_t001.tse_bi'
+TUH_NO_BCKG_TSE_BI_PATH = 'data/test_data/tuh_no_bckg_00009578_s006_t001.tse_bi'
 
 
-def generate_consolidated_features_and_annot(cropped: bool):
+def generate_consolidated_features_and_annot(features_file_path: str,
+                                             annotations_file_path: str,
+                                             cropped: bool):
     returned_path = consolidate_feats_and_annot(
-        features_file_path=FEATURES_FILE_PATH,
-        annotations_file_path=ANNOTATIONS_FILE_PATH_TUH,
+        features_file_path=features_file_path,
+        annotations_file_path=annotations_file_path,
         output_folder=OUTPUT_FOLDER,
         window_interval=WINDOW_INTERVAL,
         segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
@@ -35,39 +42,75 @@ def generate_consolidated_features_and_annot(cropped: bool):
 
 
 @pytest.fixture
-def consolidated_cropped_dataset(cropped: bool = True):
-    returned_path = generate_consolidated_features_and_annot(cropped=cropped)
+def tuh_consolidated_cropped_dataset(
+        features_file_path: str = TUH_FEATURES_FILE_PATH,
+        annotations_file_path: str = TUH_ANNOTATIONS_FILE_PATH,
+        cropped: bool = True):
+    returned_path = generate_consolidated_features_and_annot(
+        features_file_path=features_file_path,
+        annotations_file_path=annotations_file_path,
+        cropped=cropped)
+
     return returned_path
 
 
 @pytest.fixture
-def consolidated_uncropped_dataset(cropped: bool = False):
-    returned_path = generate_consolidated_features_and_annot(cropped=cropped)
+def tuh_consolidated_uncropped_dataset(
+        features_file_path: str = TUH_FEATURES_FILE_PATH,
+        annotations_file_path: str = TUH_ANNOTATIONS_FILE_PATH,
+        cropped: bool = False):
+    returned_path = generate_consolidated_features_and_annot(
+        features_file_path=features_file_path,
+        annotations_file_path=annotations_file_path,
+        cropped=cropped)
+    return returned_path
+
+@pytest.fixture
+def teppe_consolidated_uncropped_dataset(
+        features_file_path: str = TEPPE_FEATURES_FILE_PATH,
+        annotations_file_path: str = TEPPE_ANNOTATIONS_FILE_PATH,
+        cropped: bool = False):
+    returned_path = generate_consolidated_features_and_annot(
+        features_file_path=features_file_path,
+        annotations_file_path=annotations_file_path,
+        cropped=cropped)
     return returned_path
 
 
-def test_consolidate_feats_and_annot_cropped(consolidated_cropped_dataset):
+def test_tuh_consolidate_feats_and_annot_cropped(
+        tuh_consolidated_cropped_dataset):
 
-    returned_path = consolidated_cropped_dataset
+    returned_path = tuh_consolidated_cropped_dataset
     assert(type(returned_path) == str)
 
-    df_features = pd.read_csv(FEATURES_FILE_PATH)
+    df_features = pd.read_csv(TUH_FEATURES_FILE_PATH)
     df_export = pd.read_csv(returned_path)
     assert(df_export.shape == (df_features.shape[0]-2, df_features.shape[1]+1))
 
 
-def test_consolidate_feats_and_annot_uncropped(consolidated_uncropped_dataset):
+def test_tuh_consolidate_feats_and_annot_uncropped(
+        tuh_consolidated_uncropped_dataset):
 
-    returned_path = consolidated_uncropped_dataset
+    returned_path = tuh_consolidated_uncropped_dataset
     assert(type(returned_path) == str)
 
-    df_features = pd.read_csv(FEATURES_FILE_PATH)
+    df_features = pd.read_csv(TUH_FEATURES_FILE_PATH)
+    df_export = pd.read_csv(returned_path)
+    assert(df_export.shape == (df_features.shape[0], df_features.shape[1]+1))
+
+def test_teppe_consolidate_feats_and_annot_uncropped(
+        teppe_consolidated_uncropped_dataset):
+
+    returned_path = teppe_consolidated_uncropped_dataset
+    assert(type(returned_path) == str)
+
+    df_features = pd.read_csv(TEPPE_FEATURES_FILE_PATH)
     df_export = pd.read_csv(returned_path)
     assert(df_export.shape == (df_features.shape[0], df_features.shape[1]+1))
 
 
 def test_get_label_on_interval_no_bckg_exception():
-    df_tse_bi = read_tse_bi(NO_BCKG_TSE_BI_PATH)
+    df_tse_bi = read_tse_bi(TUH_NO_BCKG_TSE_BI_PATH)
     try:
         get_label_on_interval(
             df_tse_bi=df_tse_bi,
@@ -81,8 +124,8 @@ def test_get_label_on_interval_no_bckg_exception():
 def test_tuh_parse_consolidate_feats_and_annot_args():
 
     bash_command = (f'python3 src/usecase/detect_qrs.py '
-                    f'--features-file-path {FEATURES_FILE_PATH} '
-                    f'--annotations-file-path {ANNOTATIONS_FILE_PATH_TUH} '
+                    f'--features-file-path {TUH_FEATURES_FILE_PATH} '
+                    f'--annotations-file-path {TUH_ANNOTATIONS_FILE_PATH} '
                     f'--output-folder {OUTPUT_FOLDER} '
                     f'--window-interval {WINDOW_INTERVAL} '
                     f'--segment-size-treshold {SEGMENT_SIZE_TRESHOLD} '
@@ -92,8 +135,8 @@ def test_tuh_parse_consolidate_feats_and_annot_args():
     parser_dict = convert_args_to_dict(parser)
 
     correct_parser = argparse.Namespace(
-        features_file_path=FEATURES_FILE_PATH,
-        annotations_file_path=ANNOTATIONS_FILE_PATH_TUH,
+        features_file_path=TUH_FEATURES_FILE_PATH,
+        annotations_file_path=TUH_ANNOTATIONS_FILE_PATH,
         output_folder=OUTPUT_FOLDER,
         window_interval=WINDOW_INTERVAL,
         segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
@@ -110,13 +153,13 @@ def test_get_label_on_interval():
 
 def test_input_read_tse_bi_test():
 
-    read_tse_bi(ANNOTATIONS_FILE_PATH_TUH)
+    read_tse_bi(TUH_ANNOTATIONS_FILE_PATH)
     assert True
 
-    read_tse_bi(ANNOTATIONS_FILE_PATH_TEPPE)
+    read_tse_bi(TEPPE_ANNOTATIONS_FILE_PATH)
     assert True
 
     try:
-        read_tse_bi(ANNOTATIONS_FILE_PATH_INCORRECT)
+        read_tse_bi(TUH_ANNOTATIONS_FILE_PATH_INCORRECT)
     except ValueError:
         assert True
