@@ -393,8 +393,8 @@ def compute_hrvanalysis_features(rr_intervals_file_path: str,
         columns=features_key_to_index)
 
     df_features['timestamp'] = df_features['interval_start_time'].apply(
-        lambda x: pd.Timestamp(start_timestamp, tz=None)
-        + pd.Timedelta(x, unit='milliseconds'))
+        lambda x: pd.Timestamp(start_timestamp,
+                               tz=None) + pd.Timedelta(x, unit='milliseconds'))
 
     # EXPORT
     output_file_path = generate_output_path(
