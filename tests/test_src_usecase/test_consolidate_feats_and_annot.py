@@ -16,15 +16,16 @@ TUH_ANNOTATIONS_FILE_PATH = \
 TUH_ANNOTATIONS_FILE_PATH_INCORRECT = \
     'data/test_data/tuh_rr_00007633_s003_t007.csv'
 
-TEPPE_FEATURES_FILE_PATH = \
-    'data/test_data/teppe_feats_PAT_0_Annotations_EEG_0_s2.csv'
-TEPPE_ANNOTATIONS_FILE_PATH= \
-    'data/test_data/teppe_PAT_0_Annotations_EEG_0.tse_bi'
+DATASET_FEATUERS_FILE_PATH = \
+    'data/test_data/dataset_feats_PAT_0_Annotations_EEG_0_s2.csv'
+DATASET_ANNOTATIONS_FILE_PATH = \
+    'data/test_data/dataset_PAT_0_Annotations_EEG_0.tse_bi'
 
-WINDOW_INTERVAL= 10_000
+WINDOW_INTERVAL = 10_000
 SEGMENT_SIZE_TRESHOLD = 0.9
 CROPPED_DATASET = True
-TUH_NO_BCKG_TSE_BI_PATH = 'data/test_data/tuh_no_bckg_00009578_s006_t001.tse_bi'
+TUH_NO_BCKG_TSE_BI_PATH = \
+    'data/test_data/tuh_no_bckg_00009578_s006_t001.tse_bi'
 
 
 def generate_consolidated_features_and_annot(features_file_path: str,
@@ -65,10 +66,11 @@ def tuh_consolidated_uncropped_dataset(
         cropped=cropped)
     return returned_path
 
+
 @pytest.fixture
-def teppe_consolidated_uncropped_dataset(
-        features_file_path: str = TEPPE_FEATURES_FILE_PATH,
-        annotations_file_path: str = TEPPE_ANNOTATIONS_FILE_PATH,
+def dataset_consolidated_uncropped_dataset(
+        features_file_path: str = DATASET_FEATUERS_FILE_PATH,
+        annotations_file_path: str = DATASET_ANNOTATIONS_FILE_PATH,
         cropped: bool = False):
     returned_path = generate_consolidated_features_and_annot(
         features_file_path=features_file_path,
@@ -98,13 +100,14 @@ def test_tuh_consolidate_feats_and_annot_uncropped(
     df_export = pd.read_csv(returned_path)
     assert(df_export.shape == (df_features.shape[0], df_features.shape[1]+1))
 
-def test_teppe_consolidate_feats_and_annot_uncropped(
-        teppe_consolidated_uncropped_dataset):
 
-    returned_path = teppe_consolidated_uncropped_dataset
+def test_dataset_consolidate_feats_and_annot_uncropped(
+        dataset_consolidated_uncropped_dataset):
+
+    returned_path = dataset_consolidated_uncropped_dataset
     assert(type(returned_path) == str)
 
-    df_features = pd.read_csv(TEPPE_FEATURES_FILE_PATH)
+    df_features = pd.read_csv(DATASET_FEATUERS_FILE_PATH)
     df_export = pd.read_csv(returned_path)
     assert(df_export.shape == (df_features.shape[0], df_features.shape[1]+1))
 
@@ -156,7 +159,7 @@ def test_input_read_tse_bi_test():
     read_tse_bi(TUH_ANNOTATIONS_FILE_PATH)
     assert True
 
-    read_tse_bi(TEPPE_ANNOTATIONS_FILE_PATH)
+    read_tse_bi(DATASET_ANNOTATIONS_FILE_PATH)
     assert True
 
     try:
