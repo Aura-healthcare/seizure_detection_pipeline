@@ -19,7 +19,7 @@ TUH_ANNOTATIONS_FILE_PATH_INCORRECT = \
 DATASET_FEATUERS_FILE_PATH = \
     'data/test_data/dataset_feats_PAT_0_Annotations_EEG_0_s2.csv'
 DATASET_ANNOTATIONS_FILE_PATH = \
-    'data/test_data/dataset_PAT_0_Annotations_EEG_0.tse_bi'
+    'data/dataset/PAT_0/PAT_0_Annotations_EEG_0.tse_bi'
 
 WINDOW_INTERVAL = 10_000
 SEGMENT_SIZE_TRESHOLD = 0.9
