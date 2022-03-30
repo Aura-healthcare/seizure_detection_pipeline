@@ -42,9 +42,12 @@ for features_file in $(find $InputDest/* -type f -name "*.csv" ); do
     CleanDest=$(echo $InputDest | sed 's/\//\\\//g')
     relative_path=$(echo $path | sed "s/$CleanDest\///g")
 
-    # Teppe Format, to refactore
-    tse_bi_filename=${relative_path::-1}_Annotations_${filename:6:-7}.tse_bi
-    #tse_bi_filename=$(cut -c7- <<< ${filename%.*}.tse_bi)
+    if [ "$(echo $(basename $path) | head -c 4)" == "PAT_" ];
+    then # Dataset format
+      tse_bi_filename=${relative_path::-1}_Annotations_${filename:6:-7}.tse_bi
+    else # TUH format
+      tse_bi_filename=$(cut -c7- <<< ${filename%.*}.tse_bi)
+    fi
 
     annotation_file_path=$AnnotDest/$relative_path$tse_bi_filename
 
