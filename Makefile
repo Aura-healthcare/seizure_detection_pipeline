@@ -9,7 +9,7 @@ EXPORT_PATH=./output
 # ---------
 
 clean:
-	rm output/db/*csv
+	find output -mindepth 1 ! -name README.md -delete
 
 flake8:
 	. $(FOLDER_PATH)/env/bin/activate; \
@@ -63,6 +63,7 @@ example_ecg_qc:
 
 
 # BASH SCRIPT WRAPPING PYTHON SCRIPTS OVER ALL CANDIDATES
+# -------------
 bash_detect_qrs:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	mkdir -p $(EXPORT_PATH); \
