@@ -403,6 +403,8 @@ def compute_hrvanalysis_features(rr_intervals_file_path: str,
         format='csv',
         prefix='feats')
 
+    df_features['filename'] = output_file_path
+
     df_features.to_csv(output_file_path, sep=',', index=False)
 
     return output_file_path
