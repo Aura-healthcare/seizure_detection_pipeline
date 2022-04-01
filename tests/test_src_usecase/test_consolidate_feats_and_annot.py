@@ -10,9 +10,12 @@ from src.usecase.utilities import convert_args_to_dict
 
 OUTPUT_FOLDER = 'tests/output/features'
 
-TUH_FEATURES_FILE_PATH = 'data/test_data/tuh_feats_00009578_s006_t001.csv'
+#  TUH_FEATURES_FILE_PATH = 'data/test_data/tuh_feats_00009578_s006_t001.csv'
+TUH_FEATURES_FILE_PATH = 'data/test_data/tuh_feats_00004671_s007_t000.csv'
 TUH_ANNOTATIONS_FILE_PATH = \
-    'data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.tse_bi'
+    'data/tuh/dev/01_tcp_ar/046/00004671/' \
+    's007_2012_08_04/00004671_s007_t000.tse_bi'
+#  'data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.tse_bi'
 TUH_ANNOTATIONS_FILE_PATH_INCORRECT = \
     'data/test_data/tuh_rr_00007633_s003_t007.csv'
 
@@ -21,7 +24,7 @@ DATASET_FEATUERS_FILE_PATH = \
 DATASET_ANNOTATIONS_FILE_PATH = \
     'data/dataset/PAT_0/PAT_0_Annotations_EEG_0.tse_bi'
 
-WINDOW_INTERVAL = 10_000
+WINDOW_INTERVAL = 1_000
 SEGMENT_SIZE_TRESHOLD = 0.9
 CROPPED_DATASET = True
 TUH_NO_BCKG_TSE_BI_PATH = \
@@ -57,7 +60,7 @@ def tuh_consolidated_cropped_dataset(
 
 @pytest.fixture
 def tuh_consolidated_uncropped_dataset(
-        features_file_path: str = TUH_FEATURES_FILE_PATH,
+       features_file_path: str = TUH_FEATURES_FILE_PATH,
         annotations_file_path: str = TUH_ANNOTATIONS_FILE_PATH,
         cropped: bool = False):
     returned_path = generate_consolidated_features_and_annot(
@@ -150,8 +153,45 @@ def test_tuh_parse_consolidate_feats_and_annot_args():
     assert(parser_dict == correct_parser_dict)
 
 
-def test_get_label_on_interval():
-    pass
+def test_tuh_get_label_on_interval():
+
+    intervals_to_test = [
+        {'interval_start_time': 20_000, 'label': 0},
+        {'interval_start_time': 50_000, 'label': 1},
+        {'interval_start_time': 118_000, 'label': 0},
+        {'interval_start_time': 168_000, 'label': 1},
+        {'interval_start_time': 175_000, 'label': 0},
+        {'interval_start_time': 200_000, 'label': 1}
+    ]
+
+    for interval_to_test in intervals_to_test:
+
+        assert(get_label_on_interval(
+            df_tse_bi=read_tse_bi(TUH_ANNOTATIONS_FILE_PATH),
+            interval_start_time=interval_to_test['interval_start_time'],
+            window_interval=WINDOW_INTERVAL,
+            segment_size_treshold=SEGMENT_SIZE_TRESHOLD)
+            == interval_to_test['label'])
+
+
+def test_dataset_get_label_on_interval():
+
+    intervals_to_test = [
+        {'interval_start_time': '2017-01-10T14:30:05', 'label': 0},
+        {'interval_start_time': '2017-01-10T14:32:30', 'label': 1},
+        {'interval_start_time': '2017-01-10T14:32:41', 'label': 0},
+        {'interval_start_time': '2017-01-10T14:38:45', 'label': 1},
+        {'interval_start_time': '2017-01-10T14:38:55', 'label': 0},
+    ]
+
+    for interval_to_test in intervals_to_test:
+
+        assert(get_label_on_interval(
+            df_tse_bi=read_tse_bi(DATASET_ANNOTATIONS_FILE_PATH),
+            interval_start_time=interval_to_test['interval_start_time'],
+            window_interval=WINDOW_INTERVAL,
+            segment_size_treshold=SEGMENT_SIZE_TRESHOLD)
+            == interval_to_test['label'])
 
 
 def test_input_read_tse_bi_test():

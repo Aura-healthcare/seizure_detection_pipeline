@@ -14,8 +14,8 @@ sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict, generate_output_path
 
 OUTPUT_FOLDER = 'exports/consolidated_dataset'
-WINDOW_INTERVAL = 200
-SEGMENT_SIZE_TRESHOLD = 0.5
+WINDOW_INTERVAL = 1_000
+SEGMENT_SIZE_TRESHOLD = 0.9
 
 
 def consolidate_feats_and_annot(
@@ -55,13 +55,8 @@ def consolidate_feats_and_annot(
     df_features = pd.read_csv(features_file_path)
     df_tse_bi = read_tse_bi(annotations_file_path)
 
-    df_tse_bi['start'] = df_tse_bi['start'].apply(
-            lambda x: pd.Timestamp(x))
-    df_tse_bi['end'] = df_tse_bi['end'].apply(
-            lambda x: pd.Timestamp(x))
-
-    # La Teppe tse_bi format
-    if df_tse_bi['start'].iloc[0] > np.datetime64(1, 's'):
+    # Dataset tse_bi format
+    if df_tse_bi['start'].loc[0] > np.datetime64(1, 's'):
         df_features['label'] = df_features['timestamp'].apply(
             lambda interval_start_time: get_label_on_interval(
                 df_tse_bi=df_tse_bi,
@@ -106,6 +101,12 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
     As in tse_bi standard an empty line seperates the data from the file
     headers, the first empty line is used to infer where data starts.
 
+    Start and end columns are converted to numpy timestamp64. For TUH
+    tse_bi files, there is no timestamp but duration from the start of the
+    recording. However, it is converted in timestamp all the same as it makes
+    no incompatibily with other usages. However, starting date will always be
+    1970-01-01 00:00:00.
+
     Parameters
     ----------
     annotations_file_path : str
@@ -136,6 +137,20 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
         header=None)
 
     df_tse_bi.columns = ['start', 'end', 'annotation', 'probablility']
+
+    if df_tse_bi['start'].iloc[0] == 0:  # TUH format
+        df_tse_bi.loc[:, 'start'] = df_tse_bi['start'].apply(
+           lambda x: np.datetime64(int(x)*1000, 'ms'))
+
+        df_tse_bi.loc[:, 'end'] = df_tse_bi['end'].apply(
+            lambda x: np.datetime64(int(x)*1000, 'ms'))
+
+    else:
+        df_tse_bi.loc[:, 'start'] = df_tse_bi['start'].apply(
+           lambda x: np.datetime64(x))
+
+        df_tse_bi.loc[:, 'end'] = df_tse_bi['end'].apply(
+            lambda x: np.datetime64(x))
 
     return df_tse_bi
 
@@ -175,43 +190,31 @@ def get_label_on_interval(df_tse_bi: pd.DataFrame,
     end_marker = interval_start_time + \
         pd.Timedelta(milliseconds=window_interval)
 
-    # converting tse_bi to timestamps
-    df_tse_bi.loc[:, 'start'] = df_tse_bi['start'].apply(lambda x:
-                                                         np.datetime64(
-                                                             int(x*1000),
-                                                             'ms')
-                                                         if np.isscalar(x)
-                                                         else x)
-
-    df_tse_bi.loc[:, 'end'] = df_tse_bi['end'].apply(lambda x:
-                                                     np.datetime64(
-                                                             int(x*1000),
-                                                             'ms')
-                                                     if np.isscalar(x)
-                                                     else x)
+    df_tse_bi_temp = df_tse_bi.copy()
 
     # Filtering over intervals
-    df_tse_bi.loc[:, 'start'] = df_tse_bi['start'].apply(
+    df_tse_bi_temp.loc[:, 'start'] = df_tse_bi_temp['start'].apply(
         lambda x: interval_start_time if x <= interval_start_time else x)
-    df_tse_bi.loc[:, 'end'] = df_tse_bi['end'].apply(
+    df_tse_bi_temp.loc[:, 'end'] = df_tse_bi_temp['end'].apply(
         lambda x: end_marker if x > end_marker else x)
-    df_tse_bi.loc[:, 'length'] = (df_tse_bi['end'] - df_tse_bi['start'])
+    df_tse_bi_temp.loc[:, 'length'] = (df_tse_bi_temp['end'] -
+                                       df_tse_bi_temp['start'])
 
     # Setting negative length at 0
-    df_tse_bi.loc[:, 'length'] = df_tse_bi['length'].apply(
+    df_tse_bi_temp.loc[:, 'length'] = df_tse_bi_temp['length'].apply(
             lambda x: x.total_seconds() if x > pd.Timedelta(0) else 0)
 
     # Checking checking the duration by seiz/bckg annotations
-    df_tse_bi = df_tse_bi.groupby(['annotation']).sum()['length']
+    df_tse_bi_temp = df_tse_bi_temp.groupby(['annotation']).sum()['length']
 
     # Computing the size of each class, then label
     try:
-        seiz_length = df_tse_bi['seiz']
+        seiz_length = df_tse_bi_temp['seiz']
     except KeyError:
         seiz_length = 0
 
     try:
-        bckg_length = df_tse_bi['bckg']
+        bckg_length = df_tse_bi_temp['bckg']
     except KeyError:
         bckg_length = 0
 
