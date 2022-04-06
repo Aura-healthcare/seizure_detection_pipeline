@@ -18,6 +18,9 @@ TUH_ANNOTATIONS_FILE_PATH = \
 #  'data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.tse_bi'
 TUH_ANNOTATIONS_FILE_PATH_INCORRECT = \
     'data/test_data/tuh_rr_00007633_s003_t007.csv'
+TUH_ANNOTATIONS_FILE_PATH_EMPTY = \
+    'data/test_data/tuh_empty.tse_bi'
+
 
 DATASET_FEATUERS_FILE_PATH = \
     'data/test_data/dataset_feats_PAT_0_Annotations_EEG_0_s2.csv'
@@ -206,3 +209,7 @@ def test_input_read_tse_bi_test():
         read_tse_bi(TUH_ANNOTATIONS_FILE_PATH_INCORRECT)
     except ValueError:
         assert True
+    with pytest.raises(SystemExit) as e:
+        read_tse_bi(TUH_ANNOTATIONS_FILE_PATH_EMPTY)
+    assert e.type == SystemExit
+    assert e.value.code == 'tse_bi file is empty'
