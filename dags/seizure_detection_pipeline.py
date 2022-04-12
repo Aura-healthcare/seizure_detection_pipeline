@@ -212,10 +212,11 @@ def dag_seizure_detection_pipeline():
 
     df_db = pd.read_csv(f'{FETCHED_DATA_FOLDER}/df_candidates.csv', encoding='utf-8')
     partition_size = (df_db.shape[0] + NUM_PARTITIONS - 1) // NUM_PARTITIONS
-    for i in range(NUM_PARTITIONS):
-        start = i * partition_size
-        end = (i+1) * partition_size
-        parameters_list = get_initial_parameters(df_db.iloc[start:end])
+    for partition_index in range(NUM_PARTITIONS):
+        # Split the df_db into blocks df_db[0:partition_size], df_db[partition_size:2*partition_size], ...
+        partition_start = partition_index * partition_size
+        partition_end = (partition_index+1) * partition_size
+        parameters_list = get_initial_parameters(df_db.iloc[partition_start:partition_end])
 
         qrs_parameters_list = t_detect_qrs(parameters_list)
         parameters_list = t_consolidate_parameters(parameters_list,
