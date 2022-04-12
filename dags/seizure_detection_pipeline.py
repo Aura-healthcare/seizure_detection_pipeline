@@ -192,7 +192,8 @@ def dag_seizure_detection_pipeline():
 #        }
 #    )
 
-    def get_initial_parameters(df_db: pd.DataFrame) -> List[dict]:
+    @task()
+    def t_get_initial_parameters(df_db: pd.DataFrame) -> List[dict]:
         parameters_list = []
         for index in range(df_db.shape[0]):
             qrs_file_path = df_db['edf_file_path'].iloc[index]
@@ -216,7 +217,7 @@ def dag_seizure_detection_pipeline():
         # Split the df_db into blocks df_db[0:partition_size], df_db[partition_size:2*partition_size], ...
         partition_start = partition_index * partition_size
         partition_end = (partition_index+1) * partition_size
-        parameters_list = get_initial_parameters(df_db.iloc[partition_start:partition_end])
+        parameters_list = t_get_initial_parameters(df_db.iloc[partition_start:partition_end])
 
         qrs_parameters_list = t_detect_qrs(parameters_list)
         parameters_list = t_consolidate_parameters(parameters_list,
