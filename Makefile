@@ -2,7 +2,7 @@ FOLDER_PATH= .
 SRC_PATH=./src
 TEST_PATH=./tests
 
-DATA_PATH=data/tuh/
+DATA_PATH=data/tuh
 EXPORT_PATH=./output
 
 # UTILITIES
@@ -23,9 +23,9 @@ test:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	pytest -s -vvv $(TEST_PATH)
 
-test_conso:
+test_fetch:
 	. $(FOLDER_PATH)/env/bin/activate; \
-		pytest -s -vvv $(TEST_PATH)/test_src_usecase/test_consolidate_feats_and_annot.py
+		pytest -s -vvv $(TEST_PATH)/test_src_usecase/test_fetch_database.py
 
 
 coverage:
@@ -36,7 +36,7 @@ coverage:
 # -------------
 fetch_data:
 	. $(FOLDER_PATH)/env/bin/activate; \
-	python3 src/usecase/fetch_database.py --data-folder $(DATA_PATH) --export-folder $(EXPORT_PATH)/fetched_data
+	python3 src/usecase/fetch_database.py --data-folder-path $(DATA_PATH) --export-folder $(EXPORT_PATH)/fetched_data --infer-database
 
 
 # PREPROCESSING 
@@ -90,6 +90,11 @@ create_ml_dataset:
 train:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	python3 src/usecase/train_model.py --ml-dataset-path $(EXPORT_PATH)/ml_dataset/df_ml.csv
+
+train_ml:
+	. $(FOLDER_PATH)/env/bin/activate; \
+	python3 src/usecase/train_model.py --ml-dataset-path /home/DATA/DetecTeppe-2022-04-08/ML_ready/ML/train/df_ml_train.csv  --ml-dataset-path-test /home/DATA/DetecTeppe-2022-04-08/ML_ready/ML/test/df_ml_test.csv 
+
 
 ## VISUALIZATION 
 # ------------------
