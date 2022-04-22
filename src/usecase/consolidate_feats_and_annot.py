@@ -128,13 +128,16 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
             first_empty_line += 1
             if line in ['\n', 'r\n', '   \n']:
                 break
+    try:
+        df_tse_bi = pd.read_csv(
+            annotations_file_path,
+            skiprows=first_empty_line,
+            skip_blank_lines=False,
+            sep=' ',
+            header=None)
 
-    df_tse_bi = pd.read_csv(
-        annotations_file_path,
-        skiprows=first_empty_line,
-        skip_blank_lines=False,
-        sep=' ',
-        header=None)
+    except pd.errors.EmptyDataError:
+        sys.exit('tse_bi file is empty')
 
     df_tse_bi.columns = ['start', 'end', 'annotation', 'probablility']
 
