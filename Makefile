@@ -50,7 +50,11 @@ individual_detect_qrs:
 
 individual_compute_hrvanalysis_features:
 	. $(FOLDER_PATH)/env/bin/activate; \
+<<<<<<< Updated upstream
 	python3 src/usecase/compute_hrvanalysis_features.py --rr-intervals-file-path output/individual/res-v0_6/rr_EEG_58_s1.csv --output-folder $(EXPORT_PATH)/individual/feats-v0_6
+=======
+	python3 src/usecase/compute_hrvanalysis_features.py --rr-intervals-file-path output/individual/res-v0_6/rr_00009578_s006_t001.csv --output-folder $(EXPORT_PATH)/individual/feats-v0_6
+>>>>>>> Stashed changes
 
 individual_consolidate_feats_and_annot:
 	. $(FOLDER_PATH)/env/bin/activate; \
