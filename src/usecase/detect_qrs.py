@@ -57,6 +57,7 @@ def detect_qrs(
     except ValueError:
         print(f"There is no ECG channel in {qrs_file_path}, exiting")
         sys.exit()
+        raise ValueError(f'There is no ECG channel in {qrs_file_path}')
 
     qrs_detector = QRSDetector()
     signal = list(ecg_data["signal"])
