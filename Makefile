@@ -2,7 +2,7 @@ FOLDER_PATH= .
 SRC_PATH=./src
 TEST_PATH=./tests
 
-DATA_PATH=data/tuh/
+DATA_PATH=data/PL
 EXPORT_PATH=./output
 
 # UTILITIES
@@ -46,15 +46,15 @@ fetch_data:
 # PYTHON SCRIPT ON INDIVIDUAL FILES
 individual_detect_qrs:
 	. $(FOLDER_PATH)/env/bin/activate; \
-	python3 src/usecase/detect_qrs.py --qrs-file-path $(DATA_PATH)/002/00009578/00009578_s006_t001.edf --method hamilton --exam-id 00009578_s006_t001 --output-folder $(EXPORT_PATH)/individual/res-v0_6
+	python3 src/usecase/detect_qrs.py --qrs-file-path $(DATA_PATH)/PAT_7/EEG_58_s1.edf --method hamilton --exam-id EEG_58_s1 --output-folder $(EXPORT_PATH)/individual/res-v0_6
 
 individual_compute_hrvanalysis_features:
 	. $(FOLDER_PATH)/env/bin/activate; \
-	python3 src/usecase/compute_hrvanalysis_features.py --rr-intervals-file-path exports/individual/res-v0_6/00009578_s006_t001.csv --output-folder $(EXPORT_PATH)/individual/feats-v0_6
+	python3 src/usecase/compute_hrvanalysis_features.py --rr-intervals-file-path output/individual/res-v0_6/rr_EEG_58_s1.csv --output-folder $(EXPORT_PATH)/individual/feats-v0_6
 
 individual_consolidate_feats_and_annot:
 	. $(FOLDER_PATH)/env/bin/activate; \
-	python3 src/usecase/consolidate_feats_and_annot.py --features-file-path exports/individual/feats-v0_6/00009578_s006_t001.csv --annotations-file-path $(DATA_PATH)/tuh/dev/01_tcp_ar/002/00009578/00009578_s002_t001.tse_bi --output-folder $(EXPORT_PATH)/individual/cons_v0_6
+	python3 src/usecase/consolidate_feats_and_annot.py --features-file-path output/individual/feats-v0_6/feats_EEG_58_s1.csv --annotations-file-path $(DATA_PATH)/PAT_7_Annotations_EEG_58.tse_bi --output-folder $(EXPORT_PATH)/individual/cons_v0_6
 
 
 #WIP
