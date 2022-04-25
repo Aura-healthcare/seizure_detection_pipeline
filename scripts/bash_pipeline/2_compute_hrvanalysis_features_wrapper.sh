@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## Option - select input directory to be copied from and output directory to copy into
-while getopts ":i:o:a:" option
+while getopts ":i:o:" option
 do
 case "${option}"
 in
@@ -23,9 +23,9 @@ fi
 
 
 ## Copy TUH folder tree structure
-TargetDest=$(realpath $TargetDest)
-mkdir -p $TargetDest;
-cd $InputDest && find . -type d -exec mkdir -p -- $TargetDest/{} \; && cd -
+TargetDest=$(realpath "$TargetDest")
+mkdir -p "$TargetDest";
+cd "$InputDest" && find . -type d -exec mkdir -p -- "$TargetDest/{}" \; && cd -
 
 #Hack to force the bash to split command result only on newline char
 #It is done to support the spaces in the folder names
@@ -33,16 +33,16 @@ OIFS="$IFS"
 IFS=$'\n'
 
 ## List all rr_intervals_files in InputDest ##
-for rr_intervals_file in $(find $InputDest/* -type f -name "*.csv" ); do
+for rr_intervals_file in $(find "$InputDest"/* -type f -name "*.csv" ); do
 
     filename=$(echo "$rr_intervals_file" | awk -F/ '{print $NF}')
 
     # Get relative path
-    path=$(echo $rr_intervals_file | sed "s/$filename//g")
-    CleanDest=$(echo $InputDest | sed 's/\//\\\//g')
-    relative_path=$(echo $path | sed "s/$CleanDest\///g")
+    path=$(echo "$rr_intervals_file" | sed "s/$filename//g")
+    CleanDest=$(echo "$InputDest" | sed 's/\//\\\//g')
+    relative_path=$(echo "$path" | sed "s/$CleanDest\///g")
 
-    python3 $ECG_PATH/src/usecase/compute_hrvanalysis_features.py --rr-intervals-file-path $rr_intervals_file --output-folder $TargetDest/$relative_path/
+    python3 "$ECG_PATH/src/usecase/compute_hrvanalysis_features.py" --rr-intervals-file-path "$rr_intervals_file" --output-folder "$TargetDest/$relative_path/"
 
     if [ $? -eq 0 ]
     then

@@ -1,5 +1,7 @@
+from typing import Callable, List
 from datetime import datetime
 import pandas as pd
+import logging
 
 from airflow.decorators import dag, task
 import sys
@@ -48,9 +50,28 @@ SHORT_WINDOW = 10_000
 MEDIUM_WINDOW = 60_000
 LARGE_WINDOW = 150_000
 
+NUM_PARTITIONS = 8
+
 SEGMENT_SIZE_TRESHOLD = 0.9
 
 AIRFLOW_PREFIX_TO_DATA = '/opt/airflow/'
+
+def map_parameters(fn: Callable, parameters_list: list) -> list:
+    """Similar to `list(map(fn, parameters))`, but with error checking and logging.
+    """
+    results = []
+    total = len(parameters_list)
+    for i, parameters in enumerate(parameters_list):
+        if parameters is None:
+            logging.info(f'Skipping item {i+1}/{total}: failed on previous subtask')
+            continue
+        try:
+            results.append(fn(parameters))
+            logging.info(f'Processed item {i+1}/{total}')
+        except Exception as err:
+            logging.error(f'Error processing item {i+1}/{total}: {err}')
+            results.append(None)
+    return results
 
 
 @dag(default_args=DEFAULT_ARGS,
@@ -61,58 +82,69 @@ AIRFLOW_PREFIX_TO_DATA = '/opt/airflow/'
      concurrency=CONCURRENCY)
 def dag_seizure_detection_pipeline():
 
-    @task(multiple_outputs=True)
-    def t_detect_qrs(parameters: dict) -> dict:
+    @task()
+    def t_detect_qrs(parameters_list: List[dict]) -> List[dict]:
+        def inner(parameters: dict):
+            output_qrs_file_path, sampling_frequency = detect_qrs(
+                qrs_file_path=parameters['qrs_file_path'],
+                exam_id=parameters['exam_id'],
+                method=parameters['method'],
+                output_folder=parameters['rr_intervals_folder'])
 
-        output_qrs_file_path, sampling_frequency = detect_qrs(
-            qrs_file_path=parameters['qrs_file_path'],
-            exam_id=parameters['exam_id'],
-            method=parameters['method'],
-            output_folder=parameters['rr_intervals_folder'])
+            output_parameters = {'rr_file_path': output_qrs_file_path,
+                                'sampling_frequency': sampling_frequency}
 
-        output_parameters = {'rr_file_path': output_qrs_file_path,
-                             'sampling_frequency': sampling_frequency}
+            return output_parameters
 
-        return output_parameters
+        return map_parameters(inner, parameters_list)
 
-    @task(multiple_outputs=True)
-    def t_consolidate_parameters(param_dict_1: dict,
-                                 param_dict_2: dict) -> dict:
+    @task()
+    def t_consolidate_parameters(param_dict_1_list: List[dict],
+                                 param_dict_2_list: List[dict]) -> List[dict]:
+        consolidated_parameters_list = []
+        for param_dict_1, param_dict_2 in zip(param_dict_1_list, param_dict_2_list):
+            if param_dict_1 is None or param_dict_2 is None:
+                consolidated_parameters_list.append(None)
+            else:
+                consolidated_parameters_list.append({**param_dict_1, **param_dict_2})
 
-        consolidated_parameters = {**param_dict_1, **param_dict_2}
-        print(consolidated_parameters)
-        return consolidated_parameters
+        return consolidated_parameters_list
 
-    @task(multiple_outputs=True)
-    def t_compute_hrv_analysis_features(parameters: dict) -> dict:
+    @task()
+    def t_compute_hrv_analysis_features(parameters_list: List[dict]) -> List[dict]:
+        def inner(parameters: dict) -> dict:
+            output_features_file_path = compute_hrvanalysis_features(
+                rr_intervals_file_path=parameters['rr_file_path'],
+                output_folder=parameters['features_folder'],
+                sliding_window=SLIDING_WINDOW,
+                short_window=SHORT_WINDOW,
+                medium_window=MEDIUM_WINDOW,
+                large_window=LARGE_WINDOW)
 
-        output_features_file_path = compute_hrvanalysis_features(
-            rr_intervals_file_path=parameters['rr_file_path'],
-            output_folder=parameters['features_folder'],
-            sliding_window=SLIDING_WINDOW,
-            short_window=SHORT_WINDOW,
-            medium_window=MEDIUM_WINDOW,
-            large_window=LARGE_WINDOW)
+            output_parameters = {
+                'features_file_path': output_features_file_path}
 
-        output_parameters = {
-            'features_file_path': output_features_file_path}
+            return output_parameters
 
-        return output_parameters
+        return map_parameters(inner, parameters_list)
 
-    @task(multiple_outputs=True)
-    def t_compute_consolidate_feats_and_annot(parameters: dict) -> dict:
-        output_cons_file_path = consolidate_feats_and_annot(
-            features_file_path=parameters['features_file_path'],
-            annotations_file_path=parameters['annotations_file_path'],
-            output_folder=parameters['consolidated_folder'],
-            window_interval=WINDOW_INTERVAL,
-            segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
-            crop_dataset=True)
+    @task()
+    def t_compute_consolidate_feats_and_annot(parameters_list: List[dict]) -> List[dict]:
+        def inner(parameters: dict) -> dict:
+            output_cons_file_path = consolidate_feats_and_annot(
+                features_file_path=parameters['features_file_path'],
+                annotations_file_path=parameters['annotations_file_path'],
+                output_folder=parameters['consolidated_folder'],
+                window_interval=WINDOW_INTERVAL,
+                segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
+                crop_dataset=True)
 
-        output_parameters = {
-            'cons_file_path': output_cons_file_path}
+            output_parameters = {
+                'cons_file_path': output_cons_file_path}
 
-        return output_parameters
+            return output_parameters
+
+        return map_parameters(inner, parameters_list)
 
 #    @task(depends_on_past=True, trigger_rule=TriggerRule.ALL_DONE)
 #    def t_create_ml_dataset():
@@ -160,35 +192,46 @@ def dag_seizure_detection_pipeline():
 #        }
 #    )
 
+    @task()
+    def t_get_initial_parameters(df_db: pd.DataFrame) -> List[dict]:
+        parameters_list = []
+        for index in range(df_db.shape[0]):
+            qrs_file_path = df_db['edf_file_path'].iloc[index]
+            tse_bi_file_path = df_db['annotations_file_path'].iloc[index]
+            exam_id = df_db['exam_id'].iloc[index]
+            parameters = {'qrs_file_path': ''.join([AIRFLOW_PREFIX_TO_DATA,
+                                                    qrs_file_path]),
+                            'annotations_file_path': ''.join([AIRFLOW_PREFIX_TO_DATA,
+                                                            tse_bi_file_path]),
+                            'exam_id': exam_id,
+                            'method': DETECT_QRS_METHOD,
+                            'rr_intervals_folder': RR_INTERVALS_FOLDER,
+                            'features_folder': FEATURES_FOLDER,
+                            'consolidated_folder': CONSOLIDATED_FOLDER}
+            parameters_list.append(parameters)
+        return parameters_list
+
     df_db = pd.read_csv(f'{FETCHED_DATA_FOLDER}/df_candidates.csv', encoding='utf-8')
+    partition_size = (df_db.shape[0] + NUM_PARTITIONS - 1) // NUM_PARTITIONS
+    for partition_index in range(NUM_PARTITIONS):
+        # Split the df_db into blocks df_db[0:partition_size], df_db[partition_size:2*partition_size], ...
+        partition_start = partition_index * partition_size
+        partition_end = (partition_index+1) * partition_size
+        parameters_list = t_get_initial_parameters(df_db.iloc[partition_start:partition_end])
 
-    for index in range(df_db.shape[0]):
-        qrs_file_path = df_db['edf_file_path'].iloc[index]
-        tse_bi_file_path = df_db['annotations_file_path'].iloc[index]
-        exam_id = df_db['exam_id'].iloc[index]
-        parameters = {'qrs_file_path': ''.join([AIRFLOW_PREFIX_TO_DATA,
-                                                qrs_file_path]),
-                      'annotations_file_path': ''.join([AIRFLOW_PREFIX_TO_DATA,
-                                                        tse_bi_file_path]),
-                      'exam_id': exam_id,
-                      'method': DETECT_QRS_METHOD,
-                      'rr_intervals_folder': RR_INTERVALS_FOLDER,
-                      'features_folder': FEATURES_FOLDER,
-                      'consolidated_folder': CONSOLIDATED_FOLDER}
+        qrs_parameters_list = t_detect_qrs(parameters_list)
+        parameters_list = t_consolidate_parameters(parameters_list,
+                                                   qrs_parameters_list)
 
-        qrs_parameters = t_detect_qrs(parameters)
-        parameters = t_consolidate_parameters(parameters,
-                                              qrs_parameters)
+        features_parameters_list = t_compute_hrv_analysis_features(parameters_list)
+        parameters_list = t_consolidate_parameters(parameters_list,
+                                                   features_parameters_list)
 
-        features_parameters = t_compute_hrv_analysis_features(parameters)
-        parameters = t_consolidate_parameters(parameters,
-                                              features_parameters)
-
-        consolidated_feats_and_annot_parameters = \
-            t_compute_consolidate_feats_and_annot(parameters)
-        parameters = t_consolidate_parameters(
-            parameters,
-            consolidated_feats_and_annot_parameters)
+        consolidated_feats_and_annot_parameters_list = \
+            t_compute_consolidate_feats_and_annot(parameters_list)
+        parameters_list = t_consolidate_parameters(
+            parameters_list,
+            consolidated_feats_and_annot_parameters_list)
 
 
 #        file_quality = t_apply_ecg_qc(filepath=data_file_path,
