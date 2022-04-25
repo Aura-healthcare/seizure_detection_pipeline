@@ -15,9 +15,9 @@ def test_ecg_channel_read__if_all_inputs_are_given_return_true():
 
     #Given
     expected_result=True
-    edfloader = EdfLoader(FILE_PATH)
-    ecg_channel_name = edfloader.get_ecg_candidate_channel()
-    start_time, end_time = edfloader.get_edf_file_interval()
+    #edfloader = EdfLoader(FILE_PATH)
+    #ecg_channel_name = edfloader.get_ecg_candidate_channel()
+    #start_time, end_time = edfloader.get_edf_file_interval()
     
     #sampling_frequency, ecg_data = ecg_channel_read(
      #   PATIENT, RECORD, SEGMENT, ecg_channel_name, start_time, end_time
