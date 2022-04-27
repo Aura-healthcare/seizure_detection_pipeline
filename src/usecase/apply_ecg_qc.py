@@ -328,7 +328,6 @@ def get_signal_quality(signal: List[float],
 
 
 def apply_ecg_qc(qrs_file_path: str,
-                 exam_id: str,
                  formatting: str,
                  output_folder: str = OUTPUT_FOLDER,
                  model: str = ECG_QC_MODEL) -> str:
@@ -338,8 +337,6 @@ def apply_ecg_qc(qrs_file_path: str,
     ----------
     qrs_file_path : str
         The path of the file including ECG signal
-    exam_id : str
-        ID of the exam to load
     formatting: str
         Formatting of the tse_bi output ('teppe' or 'tuh')
     output_folder : str
@@ -368,7 +365,7 @@ def apply_ecg_qc(qrs_file_path: str,
         end_time=end_time,
         formatting=formatting)
 
-    output_file_path = generate_output_path(input_file_path=exam_id,
+    output_file_path = generate_output_path(input_file_path=qrs_file_path,
                                             output_folder=output_folder,
                                             format="tse_bi",
                                             prefix="ecg_qc")
@@ -403,8 +400,6 @@ def parse_apply_ecg_qc_args(args_to_parse: List[str]) -> argparse.Namespace:
                         required=True)
     parser.add_argument('--output-folder',
                         dest='output_folder')
-    parser.add_argument('--exam-id',
-                        dest='exam_id')
     parser.add_argument('--model',
                         dest='model',
                         choices=MODELS)

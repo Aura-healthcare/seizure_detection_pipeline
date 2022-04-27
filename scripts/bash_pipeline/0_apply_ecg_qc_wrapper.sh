@@ -42,7 +42,7 @@ for edf_file in $(find "$InputDest"/* -type f -name "*.edf" ); do
     CleanDest=$(echo "$InputDest" | sed 's/\//\\\//g')
     relative_path=$(echo "$path" | sed "s/$CleanDest\///g")
 
-    python3 "$ECG_PATH/src/usecase/apply_ecg_qc.py" --qrs-file-path "$edf_file" --output-folder "$TargetDest/$relative_path" --exam-id 00009578_s006_t001 --formatting "$Formatting"
+    python3 "$ECG_PATH/src/usecase/apply_ecg_qc.py" --qrs-file-path "$edf_file" --output-folder "$TargetDest/$relative_path" --formatting "$Formatting"
 
 	  # python3 src/usecase/apply_ecg_qc.py --qrs-file-path data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.edf  --output-folder $(EXPORT_PATH)/ecg_qc-v0_6 --sampling-frequency 1000 --exam-id 00009578_s006_t001
     if [ $? -eq 0 ]
