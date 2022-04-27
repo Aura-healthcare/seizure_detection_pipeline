@@ -5,6 +5,8 @@ TEST_PATH=./tests
 DATA_PATH=data/tuh
 EXPORT_PATH=./output
 
+TSE_BI_FORMATTING=dataset
+
 # UTILITIES
 # ---------
 
@@ -48,6 +50,10 @@ individual_detect_qrs:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	python3 src/usecase/detect_qrs.py --qrs-file-path $(DATA_PATH)/002/00009578/00009578_s006_t001.edf --method hamilton --exam-id 00009578_s006_t001 --output-folder $(EXPORT_PATH)/individual/res-v0_6
 
+individual_apply_ecg_qc:
+	. $(FOLDER_PATH)/env/bin/activate; \
+	python3 src/usecase/apply_ecg_qc.py --qrs-file-path data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.edf --exam-id 00009578_s006_t001 --output-folder $(EXPORT_PATH)/ecg_qc-v0_6  --formatting dataset
+
 individual_compute_hrvanalysis_features:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	python3 src/usecase/compute_hrvanalysis_features.py --rr-intervals-file-path exports/individual/res-v0_6/00009578_s006_t001.csv --output-folder $(EXPORT_PATH)/individual/feats-v0_6
@@ -57,11 +63,6 @@ individual_consolidate_feats_and_annot:
 	python3 src/usecase/consolidate_feats_and_annot.py --features-file-path exports/individual/feats-v0_6/00009578_s006_t001.csv --annotations-file-path $(DATA_PATH)/tuh/dev/01_tcp_ar/002/00009578/00009578_s002_t001.tse_bi --output-folder $(EXPORT_PATH)/individual/cons_v0_6
 
 
-#WIP
-example_ecg_qc:
-	python3 src/usecase/apply_ecg_qc.py --filepath data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.edf  --output-folder . --sampling-frequency 1000 --exam-id 00009578_s006_t001
-
-
 # BASH SCRIPT WRAPPING PYTHON SCRIPTS OVER ALL CANDIDATES
 # -------------
 bash_detect_qrs:
@@ -69,6 +70,12 @@ bash_detect_qrs:
 	mkdir -p $(EXPORT_PATH); \
 	./scripts/bash_pipeline/1_detect_qrs_wrapper.sh  -i $(DATA_PATH) -o $(EXPORT_PATH)/res-v0_6
 
+bash_apply_ecg_qc:
+	. $(FOLDER_PATH)/env/bin/activate; \
+	mkdir -p $(EXPORT_PATH); \
+	./scripts/bash_pipeline/0_apply_ecg_qc_wrapper.sh  -i $(DATA_PATH) -o $(EXPORT_PATH)/ecg_qc-v0_6 -f $(TSE_BI_FORMATTING)
+
+# To do: check the frequency beforehand
 bash_compute_hrvanalysis_features:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	./scripts/bash_pipeline/2_compute_hrvanalysis_features_wrapper.sh  -i $(EXPORT_PATH)/res-v0_6 -o $(EXPORT_PATH)/feats-v0_6

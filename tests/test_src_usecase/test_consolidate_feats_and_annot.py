@@ -33,6 +33,8 @@ CROPPED_DATASET = True
 TUH_NO_BCKG_TSE_BI_PATH = \
     'data/test_data/tuh_no_bckg_00009578_s006_t001.tse_bi'
 
+LABEL_TARGET = 'seiz'
+
 
 def generate_consolidated_features_and_annot(features_file_path: str,
                                              annotations_file_path: str,
@@ -43,6 +45,7 @@ def generate_consolidated_features_and_annot(features_file_path: str,
         output_folder=OUTPUT_FOLDER,
         window_interval=WINDOW_INTERVAL,
         segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
+        label_target=LABEL_TARGET,
         crop_dataset=cropped)
 
     return returned_path
@@ -125,7 +128,8 @@ def test_get_label_on_interval_no_bckg_exception():
             df_tse_bi=df_tse_bi,
             interval_start_time=0,
             window_interval=WINDOW_INTERVAL,
-            segment_size_treshold=SEGMENT_SIZE_TRESHOLD)
+            segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
+            label_target=LABEL_TARGET)
     except KeyError:
         assert True
 
@@ -173,7 +177,8 @@ def test_tuh_get_label_on_interval():
             df_tse_bi=read_tse_bi(TUH_ANNOTATIONS_FILE_PATH),
             interval_start_time=interval_to_test['interval_start_time'],
             window_interval=WINDOW_INTERVAL,
-            segment_size_treshold=SEGMENT_SIZE_TRESHOLD)
+            segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
+            label_target=LABEL_TARGET)
             == interval_to_test['label'])
 
 
@@ -193,7 +198,8 @@ def test_dataset_get_label_on_interval():
             df_tse_bi=read_tse_bi(DATASET_ANNOTATIONS_FILE_PATH),
             interval_start_time=interval_to_test['interval_start_time'],
             window_interval=WINDOW_INTERVAL,
-            segment_size_treshold=SEGMENT_SIZE_TRESHOLD)
+            segment_size_treshold=SEGMENT_SIZE_TRESHOLD,
+            label_target=LABEL_TARGET)
             == interval_to_test['label'])
 
 
