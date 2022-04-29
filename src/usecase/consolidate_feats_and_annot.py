@@ -149,15 +149,15 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
     except pd.errors.EmptyDataError:
         sys.exit("tse_bi file is empty")
 
-    df_tse_bi.columns = ["start", "end", "annotation", "probablility"]
+    df_tse_bi.columns = ["start", "end", "annotation", "probability"]
 
     if df_tse_bi["start"].iloc[0] == 0:  # TUH format
         df_tse_bi.loc[:, "start"] = df_tse_bi["start"].apply(
-            lambda x: np.datetime64(int(x) * 1000, "ms")
+            lambda x: np.datetime64(int(x * 1_000_000_000), "ns")
         )
 
         df_tse_bi.loc[:, "end"] = df_tse_bi["end"].apply(
-            lambda x: np.datetime64(int(x) * 1000, "ms")
+            lambda x: np.datetime64(int(x * 1_000_000_000), "ns")
         )
 
     else:
@@ -166,6 +166,8 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
 
         df_tse_bi.loc[:, "end"] = df_tse_bi["end"].apply(
             lambda x: np.datetime64(x))
+
+    df_tse_bi['probability'] = df_tse_bi['probability'].astype(int)
 
     return df_tse_bi
 
@@ -227,8 +229,8 @@ def get_label_on_interval(
     # Checking checking the duration by seiz/bckg annotations
     df_tse_bi_temp = df_tse_bi_temp.groupby(["annotation"]).sum()["length"]
 
-    print(df_tse_bi_temp)
     assert(len(df_tse_bi_temp.index) <= 2)
+
     try:
         label_other = [label for label in df_tse_bi_temp.index
                        if label != label_target][0]
@@ -290,9 +292,8 @@ def parse_consolidate_feats_and_annot_args(
     )
     parser.add_argument("--crop-dataset", dest="crop_dataset", type=bool)
     parser.add_argument("--label-target ", dest="label_target", type=str)
-    args = parser.parse_args(args_to_parse)
 
-    return args
+    return parser.parse_args(args_to_parse)
 
 
 if __name__ == "__main__":
