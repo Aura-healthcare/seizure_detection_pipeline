@@ -18,7 +18,7 @@ from src.usecase.apply_ecg_qc import \
 from src.usecase.consolidate_feats_and_annot import read_tse_bi
 from src.usecase.utilities import convert_args_to_dict
 
-OUTPUT_FOLDER = 'tests/output/features'
+OUTPUT_FOLDER = 'tests/output/'
 
 TUH_FEATURES_FILE_PATH = 'data/test_data/tuh_feats_00004671_s007_t000.csv'
 TUH_ANNOTATIONS_FILE_PATH = \
