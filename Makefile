@@ -6,6 +6,7 @@ DATA_PATH=data/PL
 EXPORT_PATH=./output
 
 TSE_BI_FORMATTING=dataset
+COMPARISON_FOLDER=res-v0_6
 
 # UTILITIES
 # ---------
@@ -54,6 +55,10 @@ individual_apply_ecg_qc:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	python3 src/usecase/apply_ecg_qc.py --qrs-file-path data/tuh/dev/01_tcp_ar/002/00009578/00009578_s006_t001.edf --exam-id 00009578_s006_t001 --output-folder $(EXPORT_PATH)/ecg_qc-v0_6  --formatting dataset
 
+individual_compare_qrs_detectors:
+	. $(FOLDER_PATH)/env/bin/activate; \
+	python3 src/usecase/compare_qrs_detectors.py --reference-rr-intervals-file-path output/res-v0_6/dev/01_tcp_ar/002/00009578/rr_00009578_s002_t001.csv --comparison-rr-intervals-file-path output/res-v0_6/dev/01_tcp_ar/002/00009578/rr_00009578_s002_t001.csv --output-folder $(EXPORT_PATH)/individual/comp-v0_6 --formatting $(TSE_BI_FORMATTING)
+
 individual_compute_hrvanalysis_features:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	python3 src/usecase/compute_hrvanalysis_features.py --rr-intervals-file-path exports/individual/res-v0_6/00009578_s006_t001.csv --output-folder $(EXPORT_PATH)/individual/feats-v0_6
@@ -75,7 +80,11 @@ bash_apply_ecg_qc:
 	mkdir -p $(EXPORT_PATH); \
 	./scripts/bash_pipeline/0_apply_ecg_qc_wrapper.sh  -i $(DATA_PATH) -o $(EXPORT_PATH)/ecg_qc-v0_6 -f $(TSE_BI_FORMATTING)
 
-# To do: check the frequency beforehand
+bash_compare_qrs_detectors:
+	. $(FOLDER_PATH)/env/bin/activate; \
+	mkdir -p $(EXPORT_PATH); \
+	./scripts/bash_pipeline/0_compare_qrs_detectors.sh  -i $(EXPORT_PATH)/res-v0_6 -c $(EXPORT_PATH)/res-v0_6-comp -o $(EXPORT_PATH)/$(COMPARISON_FOLDER) -f $(TSE_BI_FORMATTING)
+
 bash_compute_hrvanalysis_features:
 	. $(FOLDER_PATH)/env/bin/activate; \
 	./scripts/bash_pipeline/2_compute_hrvanalysis_features_wrapper.sh  -i $(EXPORT_PATH)/res-v0_6 -o $(EXPORT_PATH)/feats-v0_6
