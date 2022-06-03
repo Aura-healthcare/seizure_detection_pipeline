@@ -1,7 +1,9 @@
 """
 Feature engineering process.
 
-Write some texte after
+This script clean data before model fitting. The clean actions are defined by exploring data.
+It's about imputting nan values by some strategy, detect outliers and remove them and make
+some pca analysis to reduce multi-colinéarité.
 """
 
 import os
@@ -24,7 +26,7 @@ class Feature_engineering:
     ) -> None:
 
         #read file in dataframe from path patient dataset
-        self.dataframe = pd.read_csv(self.patient_dataset_path)
+        self.dataframe = pd.read_csv(patient_dataset_path)
 
         #sort row by timestamp
         self.dataframe = self.dataframe.sort_values(by = 'timestamp').reset_index(drop=True)
@@ -32,7 +34,7 @@ class Feature_engineering:
         self.dataframe_copy = self.dataframe.copy()
 
         #drop some columns that will be unused
-        self.dataframe_copy.drop(['filename', 'interval_index'], axis=1, inplace=True)
+        self.dataframe_copy.drop(['filename', 'interval_index', 'timestamp'], axis=1, inplace=True)
 
         self.X = None
         self.Y = None
@@ -67,7 +69,7 @@ class Feature_engineering:
         # Detection of outliers
         LOF = LocalOutlierFactor()
         Y_pred = LOF.fit_predict(self.X_imputed)
-        X_score = LOF.negative_outlier_facto
+        X_score = LOF.negative_outlier_factor_
 
         outlier_score = pd.DataFrame()
         outlier_score['score'] = X_score
