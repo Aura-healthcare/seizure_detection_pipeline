@@ -192,9 +192,12 @@ def train_model(ml_dataset_path: str,
     with mlflow.start_run():
         df_ml = pd.read_csv(ml_dataset_path)
         df_ml = clean_ml_dataset(df_ml, target_treshold=0.5)
+        df_ml = df_ml.dropna()
 
         y = df_ml['label']
         X = df_ml.drop('label', 1).drop('timestamp', 1)
+        X = df_ml[['mean_hr']]
+
 
         # Making train and test variables
         X_train, X_test, y_train, y_test = train_test_split(

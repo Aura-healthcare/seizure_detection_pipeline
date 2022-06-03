@@ -2,7 +2,7 @@ FOLDER_PATH= .
 SRC_PATH=./src
 TEST_PATH=./tests
 
-DATA_PATH=data/tuh
+DATA_PATH=data/PL
 EXPORT_PATH=./output
 
 # UTILITIES
