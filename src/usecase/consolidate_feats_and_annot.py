@@ -7,6 +7,7 @@ SPDX-License-Identifier: GPL-3.0
 import argparse
 import numpy as np
 import pandas as pd
+import re
 import sys
 from typing import List
 
@@ -88,7 +89,9 @@ def consolidate_feats_and_annot(
                          inplace=True)
 
     input_file_generated = "".join(
-        [annotations_file_path[:-7], features_file_path[-9:-4], ".tse_bi"]
+        [annotations_file_path[:-7],
+         re.search(r'_s[0-9]*', features_file_path).group(0),
+         ".tse_bi"]
     )
 
     output_file_path = generate_output_path(

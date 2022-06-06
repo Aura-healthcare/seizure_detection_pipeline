@@ -43,8 +43,10 @@ for features_file in $(find "$InputDest"/* -type f -name "*.csv" ); do
     relative_path=$(echo "$path" | sed "s/$CleanDest\///g")
 
     if [ "$(basename "$path" | head -c 4)" == "PAT_" ];
+
     then # Dataset format
-      tse_bi_filename=${relative_path::-1}_Annotations_${filename:6:-7}.tse_bi
+      segment=$(echo $filename | awk -FEEG_ '{ print $2}' | awk -F_s '{ print $1 }' )
+      tse_bi_filename=${relative_path::-1}_Annotations_EEG_${segment}.tse_bi
     else # TUH format
       tse_bi_filename=$(cut -c7- <<< "${filename%.*}.tse_bi")
     fi
