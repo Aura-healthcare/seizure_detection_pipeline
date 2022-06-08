@@ -29,8 +29,10 @@ from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import RandomOverSampler
 from typing import List
 
+
 sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict
+from src.usecase.feature_engineering import FeatureEngineering
 
 TRACKING_URI = 'http://localhost:5000'
 MODEL_PARAM = {
@@ -195,10 +197,24 @@ def train_model(ml_dataset_path: str,
     mlflow.set_tracking_uri(tracking_uri)
 
     with mlflow.start_run():
+
+        #featEng = Feature_engineering(ml_dataset_path, objectif_variance=0.80)
+        #featEng.impute_nan_and_infinite_values()
+        #featEng.outlier_detection()
+        #df_ml = featEng.pca_analysis()
         df_ml = pd.read_csv(ml_dataset_path)
         df_ml = clean_ml_dataset(df_ml, target_treshold=0.5)
+        df_ml.replace([np.inf, -np.inf], np.nan, inplace=True)
         df_ml = df_ml.dropna()
 
+<<<<<<< Updated upstream
+=======
+        y = df_ml['label']
+        X = df_ml.drop('label', 1).drop('timestamp', 1).drop('set', 1)
+        #X = df_ml[['mean_hr']]
+
+
+>>>>>>> Stashed changes
         # Making train and test variables
         if ml_dataset_path_test is not None:
             y_train = df_ml['label']
