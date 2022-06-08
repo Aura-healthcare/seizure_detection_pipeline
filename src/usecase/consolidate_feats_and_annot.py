@@ -7,6 +7,7 @@ SPDX-License-Identifier: GPL-3.0
 import argparse
 import numpy as np
 import pandas as pd
+import re
 import sys
 from typing import List
 
@@ -17,6 +18,8 @@ OUTPUT_FOLDER = "exports/consolidated_dataset"
 WINDOW_INTERVAL = 1_000
 SEGMENT_SIZE_TRESHOLD = 0.9
 
+LABEL_TARGET = "seiz"
+
 
 def consolidate_feats_and_annot(
     features_file_path: str,
@@ -24,6 +27,7 @@ def consolidate_feats_and_annot(
     output_folder: str = OUTPUT_FOLDER,
     window_interval: int = WINDOW_INTERVAL,
     segment_size_treshold: float = SEGMENT_SIZE_TRESHOLD,
+    label_target: str = LABEL_TARGET,
     crop_dataset: bool = True,
 ) -> str:
     """
@@ -64,6 +68,7 @@ def consolidate_feats_and_annot(
                 interval_start_time=interval_start_time,
                 window_interval=window_interval,
                 segment_size_treshold=segment_size_treshold,
+                label_target="seiz"
             )
         )
 
@@ -75,14 +80,18 @@ def consolidate_feats_and_annot(
                 interval_start_time=interval_start_time,
                 window_interval=window_interval,
                 segment_size_treshold=segment_size_treshold,
+                label_target=label_target
             )
         )
 
     if crop_dataset:
-        df_features.drop([df_features.index[0], df_features.index[-1]], inplace=True)
+        df_features.drop([df_features.index[0], df_features.index[-1]],
+                         inplace=True)
 
     input_file_generated = "".join(
-        [annotations_file_path[:-7], features_file_path[-9:-4], ".tse_bi"]
+        [annotations_file_path[:-7],
+         re.search(r'_s[0-9]*', features_file_path).group(0),
+         ".tse_bi"]
     )
 
     output_file_path = generate_output_path(
@@ -121,7 +130,8 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
         DataFrame including the data from input tse_bi
     """
     if annotations_file_path.split("/")[-1].split(".")[-1] != "tse_bi":
-        raise ValueError(f"Please input a tse_bi file. Input: {annotations_file_path}")
+        raise ValueError(f"Please input a tse_bi file. Input:"
+                         f"{annotations_file_path}")
     # La teppe format, which is slightly different
 
     with open(annotations_file_path, "r") as annotations_file:
@@ -142,21 +152,25 @@ def read_tse_bi(annotations_file_path: str) -> pd.DataFrame:
     except pd.errors.EmptyDataError:
         sys.exit("tse_bi file is empty")
 
-    df_tse_bi.columns = ["start", "end", "annotation", "probablility"]
+    df_tse_bi.columns = ["start", "end", "annotation", "probability"]
 
     if df_tse_bi["start"].iloc[0] == 0:  # TUH format
         df_tse_bi.loc[:, "start"] = df_tse_bi["start"].apply(
-            lambda x: np.datetime64(int(x) * 1000, "ms")
+            lambda x: np.datetime64(int(x * 1_000_000_000), "ns")
         )
 
         df_tse_bi.loc[:, "end"] = df_tse_bi["end"].apply(
-            lambda x: np.datetime64(int(x) * 1000, "ms")
+            lambda x: np.datetime64(int(x * 1_000_000_000), "ns")
         )
 
     else:
-        df_tse_bi.loc[:, "start"] = df_tse_bi["start"].apply(lambda x: np.datetime64(x))
+        df_tse_bi.loc[:, "start"] = df_tse_bi["start"].apply(
+            lambda x: np.datetime64(x))
 
-        df_tse_bi.loc[:, "end"] = df_tse_bi["end"].apply(lambda x: np.datetime64(x))
+        df_tse_bi.loc[:, "end"] = df_tse_bi["end"].apply(
+            lambda x: np.datetime64(x))
+
+    df_tse_bi['probability'] = df_tse_bi['probability'].astype(int)
 
     return df_tse_bi
 
@@ -166,6 +180,7 @@ def get_label_on_interval(
     interval_start_time: int,
     window_interval: int,
     segment_size_treshold: float,
+    label_target: str
 ) -> float:
     """
     From an annotation DataFrame, select annotations on an interval.
@@ -194,7 +209,8 @@ def get_label_on_interval(
         interval_start_time = np.datetime64(int(interval_start_time), "ms")
 
     # Computing end marker
-    end_marker = interval_start_time + pd.Timedelta(milliseconds=window_interval)
+    end_marker = interval_start_time + \
+        pd.Timedelta(milliseconds=window_interval)
 
     df_tse_bi_temp = df_tse_bi.copy()
 
@@ -205,7 +221,8 @@ def get_label_on_interval(
     df_tse_bi_temp.loc[:, "end"] = df_tse_bi_temp["end"].apply(
         lambda x: end_marker if x > end_marker else x
     )
-    df_tse_bi_temp.loc[:, "length"] = df_tse_bi_temp["end"] - df_tse_bi_temp["start"]
+    df_tse_bi_temp.loc[:, "length"] = df_tse_bi_temp["end"] \
+        - df_tse_bi_temp["start"]
 
     # Setting negative length at 0
     df_tse_bi_temp.loc[:, "length"] = df_tse_bi_temp["length"].apply(
@@ -215,20 +232,32 @@ def get_label_on_interval(
     # Checking checking the duration by seiz/bckg annotations
     df_tse_bi_temp = df_tse_bi_temp.groupby(["annotation"]).sum()["length"]
 
+    assert(len(df_tse_bi_temp.index) <= 2)
+
+    try:
+        label_other = [label for label in df_tse_bi_temp.index
+                       if label != label_target][0]
+    except IndexError:
+        label_other = None
+
     # Computing the size of each class, then label
     try:
-        seiz_length = df_tse_bi_temp["seiz"]
+        label_target_length = df_tse_bi_temp[label_target]
     except KeyError:
-        seiz_length = 0
+        label_target_length = 0
 
     try:
-        bckg_length = df_tse_bi_temp["bckg"]
+        label_other_length = df_tse_bi_temp[label_other]
     except KeyError:
-        bckg_length = 0
+        label_other_length = 0
 
     try:
-        label_ratio = seiz_length / (seiz_length + bckg_length)
-        label_ratio = int(round(label_ratio, 0))
+        label_ratio = label_target_length / (label_target_length
+                                             + label_other_length)
+        label_ratio = round(label_ratio, 2)
+        if label_ratio > segment_size_treshold:
+            label_ratio = 1
+
     except ValueError:
         label_ratio = np.nan
 
@@ -265,9 +294,9 @@ def parse_consolidate_feats_and_annot_args(
         "--segment-size-treshold", dest="segment_size_treshold", type=float
     )
     parser.add_argument("--crop-dataset", dest="crop_dataset", type=bool)
-    args = parser.parse_args(args_to_parse)
+    parser.add_argument("--label-target ", dest="label_target", type=str)
 
-    return args
+    return parser.parse_args(args_to_parse)
 
 
 if __name__ == "__main__":

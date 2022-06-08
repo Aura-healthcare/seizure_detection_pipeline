@@ -175,6 +175,12 @@ def test_tuh_create_df_from_file_pattern():
                              '00009578',
                              '00007633',
                              '00004671']})
+    df.sort_values(by='data_file_path', inplace=True)
+    df.reset_index(drop=True, inplace=True)
+
+    df_target.sort_values(by='data_file_path', inplace=True)
+    df_target.reset_index(drop=True, inplace=True)
+
     assert(df.equals(df_target))
 
 
@@ -233,4 +239,9 @@ def test_tuh_fetch_database():
                   's003_2013_07_09/00007633_s003_t007.tse_bi',
                   'data/tuh/dev/01_tcp_ar/046/00004671/'
                   's007_2012_08_04/00004671_s007_t000.tse_bi']})
+    df.sort_values(by='data_file_path', inplace=True)
+    df.reset_index(drop=True, inplace=True)
+
+    df_target.sort_values(by='data_file_path', inplace=True)
+    df_target.reset_index(drop=True, inplace=True)
     assert(df.equals(df_target))

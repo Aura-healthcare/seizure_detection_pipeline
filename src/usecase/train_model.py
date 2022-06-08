@@ -36,10 +36,10 @@ TRACKING_URI = 'http://localhost:5000'
 MODEL_PARAM = {
     'model': RandomForestClassifier(),
     'grid_parameters': {
-        'min_samples_leaf': np.arange(1, 5, 1),
-        'max_depth': np.arange(11, 16, 1),
+        'min_samples_leaf': np.arange(1, 3, 2),
+        'max_depth': np.arange(5, 16, 3),
         'max_features': ['auto'],
-        'n_estimators': np.arange(15, 20, 1)}}
+        'n_estimators': np.arange(15, 20, 2)}}
 MLRUNS_DIR = f'{os.getcwd()}/mlruns'
 
 
@@ -170,6 +170,7 @@ def clean_ml_dataset(df_ml: pd.DataFrame,
 
 
 def train_model(ml_dataset_path: str,
+                ml_dataset_path_test: str = None,
                 tracking_uri: str = TRACKING_URI,
                 model_param: dict = MODEL_PARAM,
                 mlruns_dir: str = MLRUNS_DIR) -> str:
@@ -179,7 +180,11 @@ def train_model(ml_dataset_path: str,
     parameters
     ----------
     ml_dataset_path : str
-        The path to ML dataset
+        The path to ML dataset for train
+    ml_dataset_path_train : str
+        The path to ML dataset for validation. If none is inputed,
+        ml_dataset_path will be used for train and test after a
+        train_test_split
     tracking_uri : str
         URI for MLFlow tracking
     model_param: dict
@@ -194,14 +199,31 @@ def train_model(ml_dataset_path: str,
         df_ml = clean_ml_dataset(df_ml, target_treshold=0.5)
         df_ml = df_ml.dropna()
 
-        y = df_ml['label']
-        X = df_ml.drop('label', 1).drop('timestamp', 1)
-        X = df_ml[['mean_hr']]
-
-
         # Making train and test variables
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.3, random_state=42, stratify=y)
+        if ml_dataset_path_test is not None:
+            y_train = df_ml['label']
+            X_train = df_ml.\
+                drop('label', 1).\
+                drop('timestamp', 1).\
+                drop('filename', 1).\
+                drop('set', 1)
+
+            df_ml_test = pd.read_csv(ml_dataset_path_test)
+            df_ml_test = clean_ml_dataset(df_ml_test, target_treshold=0.5)
+
+            y_test = df_ml_test['label']
+            X_test = df_ml_test.\
+                drop('label', 1).\
+                drop('timestamp', 1).\
+                drop('filename', 1).\
+                drop('set', 1)
+
+        else:
+            y = df_ml['label']
+            X = df_ml.drop('label', 1).drop('timestamp', 1)
+
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.3, random_state=42, stratify=y)
 
         # Convertion of pandas DataFrames to numpy arrays
         # before using scikit-learn
@@ -264,6 +286,9 @@ def parse_train_model_args(args_to_parse: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='CLI parameter input')
     parser.add_argument('--ml-dataset-path',
                         dest='ml_dataset_path',
+                        required=True)
+    parser.add_argument('--ml-dataset-path-test',
+                        dest='ml_dataset_path_test',
                         required=True)
     args = parser.parse_args(args_to_parse)
 
