@@ -1,46 +1,123 @@
 import pytest
 import os
 
-from src.usecase.feature_engineering import Feature_engineering
+import pandas as pd
+import numpy as np
 
-DATASET_FILE_PATH = '../seizure_detection_pipeline/output/cons-v0_6/PAT_18/cons_PAT_18_Annotations_EEG_26767_s1.csv'
+from src.usecase.feature_engineering import FeatureEngineering
+
+DATASET_FILE_PATH = '/home/DATA/DetecTeppe-2022-06-06/ml_dataset_clean/df_ml_train.csv'
 OBJECTIF_VAR = 0.80
 
 def test_init_feature_engineering_object():
     
-    feat_eng = Feature_engineering(DATASET_FILE_PATH, OBJECTIF_VAR)
+    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
+    assert featEng
 
-    assert feat_eng
+
+def test_impute_nan_and_infinite_values_when_we_havent_infinite_values():
+
+    data = {
+        "mean_hr": np.random.rand(10),
+        "sdsd": np.random.rand(10),
+        "lf": np.random.rand(10),
+        "hf": np.random.rand(10)
+    }
+    data["mean_hr"][0] = np.nan
+    data["sdsd"][4] = np.nan
+    dataframe = pd.DataFrame(data)
+
+    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
+    X_imputed, Y = featEng.impute_nan_and_infinite_values(dataframe)
+
+    X_imputed = pd.DataFrame(X_imputed, columns=dataframe.columns)
+
+    assert X_imputed.isna().sum().any() != 0
 
 
-def test_impute_nan_and_infinite_values():
+def test_impute_nan_and_infinite_values_when_we_havent_nan_values():
 
-    
-    feat_eng = Feature_engineering(DATASET_FILE_PATH, OBJECTIF_VAR)
+    data = {
+        "mean_hr": np.random.rand(10),
+        "sdsd": np.random.rand(10),
+        "lf": np.random.rand(10),
+        "hf": np.random.rand(10),
+        "timestamp": np.arange(10)
+    }
+    data["mean_hr"][0] = np.inf
+    data["sdsd"][4] = np.inf
+    dataframe = pd.DataFrame(data)
+
+    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
+    X_imputed, Y = featEng.impute_nan_and_infinite_values(dataframe)
+
+    X_imputed = pd.DataFrame(X_imputed, columns=dataframe.columns)
+
+    assert X_imputed.isna().sum().any() != 0
+
+
+def test_impute_nan_and_infinite_values_when_we_have_nan_and_infinite_values():
+
+    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
+
+    data = {
+        "mean_hr": np.random.rand(10),
+        "sdsd": np.random.rand(10),
+        "lf": np.random.rand(10),
+        "hf": np.random.rand(10),
+        "timestamp": np.arange(10)
+    }
+    data["mean_hr"][0] = np.nan
+    data["sdsd"][4] = np.nan
+    dataframe = pd.DataFrame(data)
 
     not_expected_for_imputation = None
 
-    if feat_eng.dataframe.isna().sum().any() != 0:
+    X_imputed, Y = featEng.impute_nan_and_infinite_values(dataframe)
 
-        feat_eng.impute_nan_and_infinite_values()
+    assert not_expected_for_imputation != X_imputed.any()
+           
 
-        X_imputed = feat_eng.X_imputed
-
-        assert not_expected_for_imputation != X_imputed.any()
-
-
-def test_outlier_detection():
+def test_outlier_detection_when_dataframe_is_imputed():
     
-    feat_eng = Feature_engineering(DATASET_FILE_PATH, OBJECTIF_VAR)
+    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
 
-    init_shape = feat_eng.dataframe.shape
+    X_init = featEng.dataframe_copy.drop('label', 1)
+    Y_init = featEng.dataframe_copy['label']
 
-    if feat_eng.dataframe.isna().sum().any() != 0:
+    X_imputed, Y  = featEng.impute_nan_and_infinite_values()
+    X, Y = featEng.outlier_detection(X_imputed)
 
-        feat_eng.impute_nan_and_infinite_values()
+    assert X_init.shape != X.shape
+    assert Y_init.shape != Y.shape
 
-    feat_eng.outlier_detection()
 
-    final_shape = feat_eng.Y.shape
+def test_outlier_detection_when_dataframe_is_not_imputed():
+    
+    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
 
-    assert init_shape[0] != final_shape[0]
+    data = {
+        "mean_hr": np.random.rand(10),
+        "sdsd": np.random.rand(10),
+        "lf": np.random.rand(10),
+        "hf": np.random.rand(10),
+        "timestamp": np.arange(10)
+    }
+    data["mean_hr"][0] = np.nan
+    data["sdsd"][4] = np.nan
+    dataframe = pd.DataFrame(data)
+
+    with pytest.raises(Exception) as excep:
+        X, Y = featEng.outlier_detection(dataframe)
+        
+
+def test_pca_analysis():
+
+    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
+    
+    X_imputed, Y  = featEng.impute_nan_and_infinite_values()
+    X, Y = featEng.outlier_detection(X_imputed)
+
+    pca_df = featEng.pca_analysis(X)
+
+    assert pca_df
