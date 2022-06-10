@@ -207,14 +207,12 @@ def train_model(ml_dataset_path: str,
         df_ml.replace([np.inf, -np.inf], np.nan, inplace=True)
         df_ml = df_ml.dropna()
 
-<<<<<<< Updated upstream
-=======
+
         y = df_ml['label']
         X = df_ml.drop('label', 1).drop('timestamp', 1).drop('set', 1)
         #X = df_ml[['mean_hr']]
 
 
->>>>>>> Stashed changes
         # Making train and test variables
         if ml_dataset_path_test is not None:
             y_train = df_ml['label']
