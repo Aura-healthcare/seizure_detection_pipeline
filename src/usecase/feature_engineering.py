@@ -18,7 +18,7 @@ from sklearn.decomposition import PCA
 from scipy.stats import zscore
 
 
-def get_dataset(dataset_path: str, col_to_drop: list) -> Tuple(pd.DataFrame, pd.DataFrame):
+def get_dataset(dataset_path: str, col_to_drop: list) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     """
     This function will get the dataset by using path. It will also do some
@@ -39,13 +39,13 @@ def replace_infinite_values_by_nan(dataframe: pd.DataFrame) -> pd.DataFrame:
     """
     This is a simple function that replace infinite values by nan.
     """
-
-    dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
+    
+    dataframe.replace([np.inf, -np.inf], np.nan, inplace=True, regex=True)
 
     return dataframe
 
 
-def impute_nan_values_by_median(dataframe: pd.DataFrame) -> Tuple(np.array, pd.DataFrame):
+def impute_nan_values_by_median(dataframe: pd.DataFrame) -> Tuple[np.array, pd.DataFrame]:
     
     """
     This function will replace nan values by median. 
@@ -53,16 +53,19 @@ def impute_nan_values_by_median(dataframe: pd.DataFrame) -> Tuple(np.array, pd.D
     we choose to impute nan values by global median in order to avoid extrems values.
     """
 
+    if dataframe.isin([np.inf, -np.inf]).values.any():
+        dataframe = replace_infinite_values_by_nan(dataframe)
+
     X = dataframe.drop(['label'], axis=1)
     Y = dataframe['label']
 
-    imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
+    imputer = SimpleImputer(missing_values=np.nan, strategy='median')
     X_imputed = imputer.fit_transform(X)
     
     return X_imputed, Y
 
 
-def outlier_detection(X: np.array) -> pd.DataFrame:
+def outlier_detection(X: np.ndarray) -> pd.DataFrame:
 
     """
     This function detect outlier based on local density of points.
@@ -82,7 +85,7 @@ def remove_outlier(
     X_imputed_df: pd.DataFrame,
     outlier_score: pd.DataFrame,
     Y: pd.DataFrame
-    ) -> Tuple(pd.DataFrame, pd.DataFrame):
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     """
     This function will remove outlier on the dataset
@@ -96,7 +99,11 @@ def remove_outlier(
     return X_result_outlier, Y_result_outlier
 
 
-def pca_analysis(dataframe: pd.DataFrame, Y: pd.DataFrame, objective_variance) -> Tuple(any, np.ndarray):
+def pca_analysis(
+    dataframe: pd.DataFrame,
+    Y: pd.DataFrame,
+    objective_variance: float
+    ) -> Tuple[any, np.ndarray]:
 
     """
     This function resolve the problem of multicolinearity in dataset. Some features are too
@@ -114,7 +121,10 @@ def pca_analysis(dataframe: pd.DataFrame, Y: pd.DataFrame, objective_variance) -
     return pca_out, principalComponents
 
 
-def create_final_dataset_with_pca(pca_out, principalComponents: np.ndarray, Y: pd.DataFrame) -> pd.DataFrame:
+def create_final_dataset_with_pca(
+    pca_out, principalComponents: np.ndarray,
+    Y: pd.DataFrame
+    ) -> pd.DataFrame:
 
     """
     This function will create the final dataset by adding label.

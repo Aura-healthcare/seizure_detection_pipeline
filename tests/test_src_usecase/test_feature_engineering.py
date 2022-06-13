@@ -1,123 +1,158 @@
+import sys
+from matplotlib.pyplot import get
 import pytest
-import os
+from pandas.testing import assert_frame_equal
 
 import pandas as pd
 import numpy as np
+from sqlalchemy import column
 
-from src.usecase.feature_engineering import FeatureEngineering
+sys.path.append('.')
+DATASET_FILE_PATH = "/home/aura-sakhite/seizure_detection_pipeline/data/test_data/test_data_feat_eng.csv"
 
-DATASET_FILE_PATH = '/home/DATA/DetecTeppe-2022-06-06/ml_dataset_clean/df_ml_train.csv'
-OBJECTIF_VAR = 0.80
+from src.usecase.feature_engineering import (
+                                                get_dataset,
+                                                create_final_dataset_with_pca,
+                                                impute_nan_values_by_median,
+                                                outlier_detection,
+                                                pca_analysis,
+                                                replace_infinite_values_by_nan,
+                                                remove_outlier
+                                            )
 
-def test_init_feature_engineering_object():
-    
-    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
-    assert featEng
+def test_get_dataset(dataframe):
+    # Given
+    dataset_path = DATASET_FILE_PATH
+    col_to_drop = ['timestamp', "set"]
+    expected_reponse = False
 
+    # When
+    df_init, df_copy = get_dataset(dataset_path, col_to_drop)
+    dataframe = dataframe.drop(col_to_drop, axis=1)
 
-def test_impute_nan_and_infinite_values_when_we_havent_infinite_values():
-
-    data = {
-        "mean_hr": np.random.rand(10),
-        "sdsd": np.random.rand(10),
-        "lf": np.random.rand(10),
-        "hf": np.random.rand(10)
-    }
-    data["mean_hr"][0] = np.nan
-    data["sdsd"][4] = np.nan
-    dataframe = pd.DataFrame(data)
-
-    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
-    X_imputed, Y = featEng.impute_nan_and_infinite_values(dataframe)
-
-    X_imputed = pd.DataFrame(X_imputed, columns=dataframe.columns)
-
-    assert X_imputed.isna().sum().any() != 0
+    #Then
+    assert (df_init.empty == expected_reponse and df_copy.empty == expected_reponse)
+    assert_frame_equal(df_copy, dataframe)
 
 
-def test_impute_nan_and_infinite_values_when_we_havent_nan_values():
+def test_replace_infinite_values_by_nan(dataframe):
+    # Given
+    expected_response = True
 
-    data = {
-        "mean_hr": np.random.rand(10),
-        "sdsd": np.random.rand(10),
-        "lf": np.random.rand(10),
-        "hf": np.random.rand(10),
-        "timestamp": np.arange(10)
-    }
-    data["mean_hr"][0] = np.inf
-    data["sdsd"][4] = np.inf
-    dataframe = pd.DataFrame(data)
+    # When
+    dataframe = replace_infinite_values_by_nan(dataframe)
 
-    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
-    X_imputed, Y = featEng.impute_nan_and_infinite_values(dataframe)
-
-    X_imputed = pd.DataFrame(X_imputed, columns=dataframe.columns)
-
-    assert X_imputed.isna().sum().any() != 0
+    #Then
+    assert dataframe.isin([np.inf, -np.inf]).values.any() != expected_response
 
 
-def test_impute_nan_and_infinite_values_when_we_have_nan_and_infinite_values():
+def test_impute_values_by_median_when_inf_values_exist(dataframe):
+    # Given
+    expected_response = True
+    col_to_drop = ['timestamp', 'set']
 
-    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
+    # When
+    dataframe = dataframe.drop(col_to_drop, 1)
+    X_imputed, y = impute_nan_values_by_median(dataframe)
+    dataframe_imputed = pd.DataFrame(X_imputed)
 
-    data = {
-        "mean_hr": np.random.rand(10),
-        "sdsd": np.random.rand(10),
-        "lf": np.random.rand(10),
-        "hf": np.random.rand(10),
-        "timestamp": np.arange(10)
-    }
-    data["mean_hr"][0] = np.nan
-    data["sdsd"][4] = np.nan
-    dataframe = pd.DataFrame(data)
-
-    not_expected_for_imputation = None
-
-    X_imputed, Y = featEng.impute_nan_and_infinite_values(dataframe)
-
-    assert not_expected_for_imputation != X_imputed.any()
-           
-
-def test_outlier_detection_when_dataframe_is_imputed():
-    
-    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
-
-    X_init = featEng.dataframe_copy.drop('label', 1)
-    Y_init = featEng.dataframe_copy['label']
-
-    X_imputed, Y  = featEng.impute_nan_and_infinite_values()
-    X, Y = featEng.outlier_detection(X_imputed)
-
-    assert X_init.shape != X.shape
-    assert Y_init.shape != Y.shape
+    # Then
+    assert dataframe_imputed.isna().values.any() != expected_response
+    assert dataframe_imputed.shape[0] == y.shape[0]
 
 
-def test_outlier_detection_when_dataframe_is_not_imputed():
-    
-    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
+def test_impute_values_by_median_when_inf_values_not_exist(dataframe):
+    # Given
+    expected_response = True
+    col_to_drop = ['timestamp', 'set']
 
-    data = {
-        "mean_hr": np.random.rand(10),
-        "sdsd": np.random.rand(10),
-        "lf": np.random.rand(10),
-        "hf": np.random.rand(10),
-        "timestamp": np.arange(10)
-    }
-    data["mean_hr"][0] = np.nan
-    data["sdsd"][4] = np.nan
-    dataframe = pd.DataFrame(data)
+    # When
+    dataframe = dataframe.drop(col_to_drop, 1)
+    dataframe = replace_infinite_values_by_nan(dataframe)
+    X_imputed, y = impute_nan_values_by_median(dataframe)
+    dataframe_imputed = pd.DataFrame(X_imputed)
 
+    # Then
+    assert dataframe_imputed.isna().values.any() != expected_response
+    assert dataframe_imputed.shape[0] == y.shape[0]
+
+
+def test_outlier_detection_when_dataframe_is_imputed(dataframe):
+    # Given
+    expected_response = False
+    col_to_drop = ['timestamp', 'set']
+
+    # When
+    dataframe = dataframe.drop(col_to_drop, 1)
+    X_imputed, y = impute_nan_values_by_median(dataframe)
+    dataframe_imputed = pd.DataFrame(X_imputed)
+
+    outlier_score = outlier_detection(X_imputed)    
+
+    # Then
+    assert 'score' in outlier_score
+    assert dataframe_imputed.isna().values.any() == expected_response
+
+
+def test_outlier_detection_when_dataframe_is_not_imputed(dataframe):
+    # Given
+    expected_response = False
+    col_to_drop = ['timestamp', 'set']
+
+    # When
+    dataframe = dataframe.drop(col_to_drop, 1)
+    X = dataframe.drop(['label'], axis=1)
+    y = dataframe['label']
+
+    # Then
     with pytest.raises(Exception) as excep:
-        X, Y = featEng.outlier_detection(dataframe)
-        
+        outlier_score = outlier_detection(X)
 
-def test_pca_analysis():
+def test_remove_outlier(dataframe):
+    # Given
+    expected_response = False
+    col_to_drop = ['timestamp', 'set']
 
-    featEng = FeatureEngineering(DATASET_FILE_PATH, OBJECTIF_VAR)
-    
-    X_imputed, Y  = featEng.impute_nan_and_infinite_values()
-    X, Y = featEng.outlier_detection(X_imputed)
+    # When
+    dataframe = dataframe.drop(col_to_drop, 1)
+    X_imputed, y = impute_nan_values_by_median(dataframe)
+    dataframe_imputed = pd.DataFrame(X_imputed)
 
-    pca_df = featEng.pca_analysis(X)
+    outlier_score = outlier_detection(X_imputed)    
 
-    assert pca_df
+    X_result_outlier, Y_result_outlier = remove_outlier(
+        dataframe_imputed,
+        outlier_score,
+        y
+    )
+
+    # Then
+    assert X_result_outlier.shape[0] == dataframe_imputed.shape[0]
+    assert Y_result_outlier.shape[0] == y.shape[0]
+
+
+# def test_pca_analysis(dataframe):
+#     # Given
+#     expected_response = False
+#     col_to_drop = ['timestamp', 'set']
+#     objective_variance = .80
+#     columns = ["mean_hr", "sdsd", "lf", "hf"]
+
+#     # When
+#     dataframe = dataframe.drop(col_to_drop, 1)
+#     X_imputed, y = impute_nan_values_by_median(dataframe)
+#     dataframe_imputed = pd.DataFrame(X_imputed, columns=columns)
+
+#     outlier_score = outlier_detection(X_imputed)    
+
+#     X_result_outlier, Y_result_outlier = remove_outlier(
+#         dataframe_imputed,
+#         outlier_score,
+#         y
+#     )
+
+#     pca_df = pca_analysis(X_result_outlier, Y_result_outlier, objective_variance)
+
+#     # Then
+#     assert pca_df.empy == False
+#     assert_frame_equal(pca_df['label'], Y_result_outlier)
