@@ -41,7 +41,7 @@ for edf_file in $(find "$InputDest"/* -type f -name "*.edf" ); do
     CleanDest=$(echo "$InputDest" | sed 's/\//\\\//g')
     relative_path=$(echo "$path" | sed "s/$CleanDest\///g")
 
-    python3 "$ECG_PATH/src/usecase/detect_qrs.py" --qrs-file-path "$edf_file" --method hamilton --output-folder "$TargetDest/$relative_path"
+    python3 "$ECG_PATH/src/usecase/detect_qrs.py" --qrs-file-path "$edf_file" --method hamilton --output-folder "$TargetDest/$relative_path" --smoothing True
 
     if [ $? -eq 0 ]
     then

@@ -8,6 +8,7 @@ import os
 import argparse
 from typing import List
 import sys
+import numpy as np
 
 sys.path.append(".")
 from src.usecase.utilities import convert_args_to_dict, generate_output_path
@@ -19,9 +20,44 @@ METHODS = ["hamilton", "xqrs", "gqrs", "swt", "engelsee"]
 DEFAULT_METHOD = "hamilton"
 
 
-def detect_qrs(
-    qrs_file_path: str, method: str, exam_id: str, output_folder: str = OUTPUT_FOLDER
-) -> str:
+def get_similarity_signal(ecg_signal: np.array,
+                          qrs_filter=None) -> np.array:
+    """Smooth the signal with similarity correlation.
+
+    Credit: Salomon Tetelepta.
+
+    parameters
+    ----------
+    ecg_signal : np.array
+        The ECG signal
+    qrs_filter : None
+        The filter pattern to use to correlated.
+
+    returns
+    -------
+    similarity_signal : np.array
+        The ECG signal after similarity correlation with the pattern
+    """
+    if qrs_filter is None:
+        # create default qrs filter, which is just a part of the sine function
+        t = np.linspace(1.5 * np.pi, 3.5 * np.pi, 15)
+        qrs_filter = np.sin(t)
+
+    # normalize data
+    ecg_signal = (ecg_signal - ecg_signal.mean()) / ecg_signal.std()
+
+    # calculate cross correlation
+    similarity_signal = np.correlate(ecg_signal, qrs_filter, mode="same")
+    similarity_signal = similarity_signal / np.max(similarity_signal)
+
+    return similarity_signal
+
+
+def detect_qrs(qrs_file_path: str,
+               method: str,
+               exam_id: str,
+               output_folder: str = OUTPUT_FOLDER,
+               smoothing: bool = False) -> str:
     """
     Detect QRS on a, ECG signal signal.
 
@@ -60,7 +96,13 @@ def detect_qrs(
         raise ValueError(f'There is no ECG channel in {qrs_file_path}')
 
     qrs_detector = QRSDetector()
-    signal = list(ecg_data["signal"])
+
+    signal = ecg_data["signal"]
+    if smoothing:
+        signal = get_similarity_signal(np.array(signal))
+
+    signal = list(signal)
+
     detected_qrs, rr_intervals = qrs_detector.get_cardiac_infos(
         signal, sampling_frequency, method
     )
@@ -101,6 +143,7 @@ def parse_detect_qrs_args(args_to_parse: List[str]) -> argparse.Namespace:
     parser.add_argument("--method", dest="method", required=True, choices=METHODS)
     parser.add_argument("--exam-id", dest="exam_id")
     parser.add_argument("--output-folder", dest="output_folder")
+    parser.add_argument("--smoothing", dest="smoothing", type=bool)
 
     args = parser.parse_args(args_to_parse)
 
