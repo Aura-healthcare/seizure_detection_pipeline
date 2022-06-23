@@ -37,9 +37,9 @@ def create_ml_dataset(
         Output file of the consolidated dataset
     """
     consolidated_datasets = glob.glob(f"{input_folder}/**/*.csv", recursive=True)
-    df_consolidated = pd.DataFrame(columns=[*FEATURES_KEY_TO_INDEX.keys(), "label"])
+    df_consolidated = pd.read_csv(consolidated_datasets[0])
 
-    for consolidated_dataset in consolidated_datasets:
+    for consolidated_dataset in consolidated_datasets[1:]:
         df_temp = pd.read_csv(consolidated_dataset)
         df_consolidated = df_consolidated.append(df_temp)
 
