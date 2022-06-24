@@ -17,6 +17,7 @@ fonctions:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import argparse
 import mlflow
 import os
@@ -28,20 +29,33 @@ from sklearn.metrics import accuracy_score, f1_score, recall_score,\
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import RandomOverSampler
 from typing import List
-
+import xgboost as xgb
 
 sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict
-from src.usecase.feature_engineering import FeatureEngineering
+from src.usecase.feature_engineering import (createContextualFeatues, 
+                                            extract_patient_id)
 
 TRACKING_URI = 'http://localhost:5000'
+# MODEL_PARAM = {
+#     'model': RandomForestClassifier(),
+#     'grid_parameters': {
+#         'min_samples_leaf': np.arange(1, 5, 1),
+#         'max_depth': np.arange(1, 7, 1),
+#         'max_features': ['auto'],
+#         'n_estimators': np.arange(10, 20, 2)}}
 MODEL_PARAM = {
-    'model': RandomForestClassifier(),
+    'model': xgb.XGBClassifier(),
     'grid_parameters': {
-        'min_samples_leaf': np.arange(1, 3, 2),
-        'max_depth': np.arange(5, 16, 3),
-        'max_features': ['auto'],
-        'n_estimators': np.arange(15, 20, 2)}}
+        'nthread':[4],
+        'learning_rate': [0.1, 0.01, 0.05],
+        'max_depth': np.arange(1, 7, 1),
+        'subsample': [0.8],
+        'colsample_bytree': [0.6, 0.8, 1.0],
+        'n_estimators': np.arange(10, 20, 2),
+        'missing':[-999],
+        'seed': [1337]}}
+
 MLRUNS_DIR = f'{os.getcwd()}/mlruns'
 
 
@@ -162,13 +176,58 @@ def clean_ml_dataset(df_ml: pd.DataFrame,
     """
     print(f'Lines before Nan removal : {df_ml.shape[0]}')
     df_ml.replace([np.inf, -np.inf], np.nan, inplace=True)
-    df_ml = df_ml.dropna()
+    df_ml = df_ml.fillna(-999)
     print(f'Lines after Nan removal : {df_ml.shape[0]}')
 
     df_ml['label'] = df_ml['label'].apply(
         lambda x: 1 if x >= target_treshold else 0)
 
     return df_ml
+
+
+def plot_feature_importance(importance: np.array, feat_names: list, model_type: str, mlruns_dir: str) -> None:
+
+    """
+    Plot features importances of model for feature selection
+
+    parameters
+    ----------
+    importance : np.array
+        Array importance of all features used for training
+    feat_names : list
+        List of features names used in the train set
+    model_type : str
+        Name of model used
+    mtruns_dir: str
+        Directory to store ML runs
+
+    returns
+    -------
+        None
+    """
+
+    #Create arrays from feature importance and feature names
+    feature_importance = np.array(importance)
+    feature_names = np.array(feat_names)
+
+    #Create a DataFrame using a Dictionary
+    data={'feature_names':feature_names,'feature_importance':feature_importance}
+    fi_df = pd.DataFrame(data)
+
+    #Sort the DataFrame in order decreasing feature importance
+    fi_df.sort_values(by=['feature_importance'], ascending=False,inplace=True)
+
+    #Define size of bar plot
+    plt.figure(figsize=(10,8))
+    #Plot Searborn bar chart
+    sns.barplot(x=fi_df['feature_importance'], y=fi_df['feature_names'])
+    #Add chart labels
+    plt.title(model_type + 'FEATURE IMPORTANCE')
+    plt.xlabel('FEATURE IMPORTANCE')
+    plt.ylabel('FEATURE NAMES')
+    temp_name = f'{mlruns_dir}/{"Feature importances"}.png'
+    plt.savefig(temp_name)
+    mlflow.log_artifact(temp_name, "Feature importances")
 
 
 def train_model(ml_dataset_path: str,
@@ -194,94 +253,122 @@ def train_model(ml_dataset_path: str,
     mlruns_dir: str
         Directory to store ML runs
     """
-    mlflow.set_tracking_uri(tracking_uri)
 
-    with mlflow.start_run():
+    df_ml = pd.read_csv(ml_dataset_path)
+    df_ml_test = pd.read_csv(ml_dataset_path_test)
 
-        #featEng = Feature_engineering(ml_dataset_path, objectif_variance=0.80)
-        #featEng.impute_nan_and_infinite_values()
-        #featEng.outlier_detection()
-        #df_ml = featEng.pca_analysis()
-        df_ml = pd.read_csv(ml_dataset_path)
-        df_ml = clean_ml_dataset(df_ml, target_treshold=0.5)
-        df_ml.replace([np.inf, -np.inf], np.nan, inplace=True)
-        df_ml = df_ml.dropna()
+    df_ml = clean_ml_dataset(df_ml, target_treshold=0.5)
+    df_ml = df_ml.fillna(-999)
 
-<<<<<<< Updated upstream
-=======
-        y = df_ml['label']
-        X = df_ml.drop('label', 1).drop('timestamp', 1).drop('set', 1)
-        #X = df_ml[['mean_hr']]
+    #extract patient_id
+    df_ml_copy = df_ml.copy()
+    df_ml_copy['patient_id'] = df_ml_copy['filename'].apply(extract_patient_id)
+    df_ml_test_copy = df_ml_test.copy()
+    df_ml_test_copy['patient_id'] = df_ml_test_copy['filename'].apply(extract_patient_id)
+    df_ml_test_copy = clean_ml_dataset(df_ml_test_copy, target_treshold=0.5)
+    df_ml_test_copy = df_ml_test_copy.fillna(-999)
+    i=1
+    mlflow.xgboost.autolog()
+    for pat_id in df_ml_copy['patient_id'].unique().tolist(): 
+
+        mlflow.set_tracking_uri(tracking_uri)
+        if i > 1:
+            break
+        i=i+1
+        with mlflow.start_run():
+            
+            df_ml = df_ml_copy[df_ml_copy['patient_id']==50]
+            feature_names = []
+
+            #include contextual features computation
+            df_ml = createContextualFeatues(df_ml)
+
+            # Making train and test variables
+            if ml_dataset_path_test is not None:
+                y_train = df_ml['label']
+                X_train = df_ml.\
+                    drop('label', 1).\
+                    drop('timestamp', 1).\
+                    drop('filename', 1).\
+                    drop('interval_index', 1).\
+                    drop('interval_start_time', 1).\
+                    drop('patient_id', 1).\
+                    drop('set', 1)
+
+                #feature_names = X_train
+                df_ml_test = df_ml_test_copy[df_ml_test_copy['patient_id']==50]
+
+                #include contextual features computation
+                df_ml_test = createContextualFeatues(df_ml_test)
 
 
->>>>>>> Stashed changes
-        # Making train and test variables
-        if ml_dataset_path_test is not None:
-            y_train = df_ml['label']
-            X_train = df_ml.\
-                drop('label', 1).\
-                drop('timestamp', 1).\
-                drop('filename', 1).\
-                drop('set', 1)
+                y_test = df_ml_test['label']
+                X_test = df_ml_test.\
+                    drop('label', 1).\
+                    drop('timestamp', 1).\
+                    drop('filename', 1).\
+                    drop('interval_index', 1).\
+                    drop('interval_start_time', 1).\
+                    drop('patient_id', 1).\
+                    drop('set', 1)
 
-            df_ml_test = pd.read_csv(ml_dataset_path_test)
-            df_ml_test = clean_ml_dataset(df_ml_test, target_treshold=0.5)
+            else:
+                y = df_ml['label']
+                X = df_ml.drop('label', 1).drop('timestamp', 1)
 
-            y_test = df_ml_test['label']
-            X_test = df_ml_test.\
-                drop('label', 1).\
-                drop('timestamp', 1).\
-                drop('filename', 1).\
-                drop('set', 1)
+                X_train, X_test, y_train, y_test = train_test_split(
+                    X, y, test_size=0.3, random_state=42, stratify=y)
 
-        else:
-            y = df_ml['label']
-            X = df_ml.drop('label', 1).drop('timestamp', 1)
+            # Convertion of pandas DataFrames to numpy arrays
+            # before using scikit-learn
 
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.3, random_state=42, stratify=y)
+            feature_names = X_train.columns
 
-        # Convertion of pandas DataFrames to numpy arrays
-        # before using scikit-learn
+            X_train = X_train.values
+            X_test = X_test.values
+            y_train = y_train.values
+            y_test = y_test.values
 
-        X_train = X_train.values
-        X_test = X_test.values
-        y_train = y_train.values
-        y_test = y_test.values
+            # ros = RandomOverSampler(random_state=42)
+            # X, y = ros.fit_resample(X_train, y_train)
 
-        ros = RandomOverSampler(random_state=42)
-        X, y = ros.fit_resample(X_train, y_train)
+            # Model Training
+            grid_search = GridSearchCV(estimator=model_param['model'],
+                                    param_grid=model_param['grid_parameters'],
+                                    scoring='roc_auc',
+                                    cv=5,
+                                    verbose=5,
+                                    n_jobs=-1)
+            grid_search.fit(X_train, y_train)
 
-        # Model Training
-        grid_search = GridSearchCV(estimator=model_param['model'],
-                                   param_grid=model_param['grid_parameters'],
-                                   scoring='f1',
-                                   cv=5,
-                                   verbose=5,
-                                   n_jobs=-1)
-        grid_search.fit(X_train, y_train)
+            # Preparing data for performance assessement
+            y_train_pred = grid_search.predict(X_train)
+            y_test_pred = grid_search.predict(X_test)
 
-        # Preparing data for performance assessement
-        y_train_pred = grid_search.predict(X_train)
-        y_test_pred = grid_search.predict(X_test)
+            # Model and performance logging
+            mlflow.sklearn.log_model(grid_search, 'model')
 
-        # Model and performance logging
-        mlflow.sklearn.log_model(grid_search, 'model')
+            mlflow.log_param('best_param', grid_search.best_params_)
+            mlflow.log_param("ID-Patient", 50)
+            mlflow.log_param("Description", "Xgb pour patient 50")
+            # mlflow.log_param('algorith', 'rfc')
 
-        mlflow.log_param('best_param', grid_search.best_params_)
-        # mlflow.log_param('algorith', 'rfc')
+            compute_metrics('train',
+                            y_pred=y_train_pred,
+                            y_true=y_train,
+                            tracking_uri=tracking_uri,
+                            mlruns_dir=mlruns_dir)
 
-        compute_metrics('train',
-                        y_pred=y_train_pred,
-                        y_true=y_train,
-                        tracking_uri=tracking_uri,
-                        mlruns_dir=mlruns_dir)
+            compute_metrics('test',
+                            y_pred=y_test_pred,
+                            y_true=y_test,
+                            tracking_uri=tracking_uri,
+                            mlruns_dir=mlruns_dir)
 
-        compute_metrics('test',
-                        y_pred=y_test_pred,
-                        y_true=y_test,
-                        tracking_uri=tracking_uri,
-                        mlruns_dir=mlruns_dir)
+            # log features importances
+            plot_feature_importance(grid_search.best_estimator_.feature_importances_,
+                                     feature_names, "XGBoost ", mlruns_dir)
+
 
 
 def parse_train_model_args(args_to_parse: List[str]) -> argparse.Namespace:

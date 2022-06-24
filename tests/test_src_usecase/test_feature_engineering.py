@@ -199,9 +199,8 @@ def test_createTimeDomainContextualFeatures():
     _ , dataframe = get_dataset(dataset_path, col_to_drop)
 
     # When
-    dataframe_time_domain = createTimeDomainContextualFeatues(dataframe, 30)
-    print(dataframe_time_domain)
+    dataframe_with_contextual_feat = createTimeDomainContextualFeatues(dataframe)
 
     # Then
-    assert dataframe_time_domain.empty == expected_response
-    assert len(dataframe.columns.to_list()) > len(dataframe_time_domain.columns.to_list())
+    assert dataframe_with_contextual_feat.empty == expected_response
+    assert len(dataframe.columns.to_list()) < len(dataframe_with_contextual_feat.columns.to_list())
