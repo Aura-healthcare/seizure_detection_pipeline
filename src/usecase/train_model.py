@@ -48,13 +48,16 @@ MODEL_PARAM = {
     'model': xgb.XGBClassifier(),
     'grid_parameters': {
         'nthread':[4],
+        'objective': ['binary:logistic'],
         'learning_rate': [0.1, 0.01, 0.05],
-        'max_depth': np.arange(1, 7, 1),
+        'max_depth': np.arange(1, 6, 2),
         'subsample': [0.8],
+        'scale_pos_weight':[1],
         'colsample_bytree': [0.6, 0.8, 1.0],
-        'n_estimators': np.arange(10, 20, 2),
+        'n_estimators': np.arange(20, 27, 2),
         'missing':[-999],
-        'seed': [1337]}}
+        'seed': [27]}
+    }
 
 MLRUNS_DIR = f'{os.getcwd()}/mlruns'
 

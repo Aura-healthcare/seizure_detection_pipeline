@@ -238,9 +238,9 @@ def createContextualFeatues(dataframe: pd.DataFrame) -> pd.DataFrame:
     dataframe = dataframe.sort_values(by = 'timestamp').reset_index(drop=True)
 
     
-    dataframe['mean_diff'] = dataframe['mean_hr'].diff()
-    dataframe['mean_nni_diff'] = dataframe['mean_nni'].diff()
-    dataframe['max_hr_diff'] = dataframe['max_hr'].diff()
+    dataframe['mean_diff'] = dataframe['mean_hr'].diff().shift(-1)
+    dataframe['mean_nni_diff'] = dataframe['mean_nni'].diff().shift(-1)
+    dataframe['max_hr_diff'] = dataframe['max_hr'].diff().shift(-1)
 
     # time features
     dataframe['month'] = dataframe.timestamp.dt.month
@@ -252,21 +252,30 @@ def createContextualFeatues(dataframe: pd.DataFrame) -> pd.DataFrame:
     for period in [30, 60, 120]:
 
         # Moving averages on different periods
-        #dataframe['mean_nni_'+str(period)] = dataframe['mean_nni'].rolling(window=period, min_periods=10).mean().shift(-10)
-        dataframe["mean_hr_%s"%(period)] = dataframe['mean_hr'].rolling(window=period, min_periods=10).mean().shift(1, fill_value=0.0)
-        dataframe['max_hr_%s'%(period)] = dataframe['max_hr'].rolling(window=period, min_periods=10).mean().shift(1, fill_value=0.0)
+        dataframe['mean_nni_'+str(period)] = dataframe['mean_nni'].rolling(window=period, min_periods=10).mean()
+        dataframe["mean_hr_%s"%(period)] = dataframe['mean_hr'].rolling(window=period, min_periods=10).mean()
+        dataframe['max_hr_%s'%(period)] = dataframe['max_hr'].rolling(window=period, min_periods=10).max()
+        dataframe['min_hr_%s'%(period)] = dataframe['min_hr'].rolling(window=period, min_periods=10).min()
 
         # Std on differents periods
-        dataframe['sdnn_%s'%(period)] = dataframe['sdnn'].rolling(window=period, min_periods=10).std().shift(1, fill_value=0.0)
-        dataframe['sdsd_%s'%(period)] = dataframe['sdsd'].rolling(window=period, min_periods=10).std().shift(1, fill_value=0.0)
-        dataframe['std_hr_%s'%(period)] = dataframe['std_hr'].rolling(window=period, min_periods=10).std().shift(1, fill_value=0.0)
+        dataframe['sdnn_%s'%(period)] = dataframe['sdnn'].rolling(window=period, min_periods=10).std()
+        dataframe['sdsd_%s'%(period)] = dataframe['sdsd'].rolling(window=period, min_periods=10).std()
+        dataframe['std_hr_%s'%(period)] = dataframe['std_hr'].rolling(window=period, min_periods=10).std()
+        dataframe['rmssd_%s'%(period)] = dataframe['rmssd'].rolling(window=period, min_periods=10).std()
 
-        dataframe['lf_%s'%(period)] = dataframe['lf'].rolling(window=period, min_periods=10).mean().shift(1, fill_value=0.0)
-        dataframe['hf_%s'%(period)] = dataframe['hf'].rolling(window=period, min_periods=10).mean().shift(1, fill_value=0.0)
+        dataframe['lf_%s'%(period)] = dataframe['lf'].rolling(window=period, min_periods=10).mean()
+        dataframe['hf_%s'%(period)] = dataframe['hf'].rolling(window=period, min_periods=10).mean()
 
         # Std on differents periods
-        dataframe['vlf_%s'%(period)] = dataframe['vlf'].rolling(window=period, min_periods=10).mean().shift(1, fill_value=0.0)
-        dataframe['lf_hf_ratio_%s'%(period)] = dataframe['lf_hf_ratio'].rolling(window=period, min_periods=10).mean().shift(1, fill_value=0.0)
+        dataframe['vlf_%s'%(period)] = dataframe['vlf'].rolling(window=period, min_periods=10).mean()
+        dataframe['lf_hf_ratio_%s'%(period)] = dataframe['lf_hf_ratio'].rolling(window=period, min_periods=10).mean()
+
+        #non linear
+        dataframe['csi_%s'%(period)] = dataframe['csi'].rolling(window=period, min_periods=10).mean()
+        dataframe['Modified_csi_%s'%(period)] = dataframe['Modified_csi'].rolling(window=period, min_periods=10).mean()
+        dataframe['cvi_%s'%(period)] = dataframe['cvi'].rolling(window=period, min_periods=10).mean()
+        dataframe['sd1_%s'%(period)] = dataframe['sd1'].rolling(window=period, min_periods=10).mean()
+        dataframe['sd2_%s'%(period)] = dataframe['sd2'].rolling(window=period, min_periods=10).mean()
 
     return dataframe.fillna(-999)
 
