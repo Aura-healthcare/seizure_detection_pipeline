@@ -37,27 +37,27 @@ from src.usecase.feature_engineering import (createContextualFeatues,
                                             extract_patient_id)
 
 TRACKING_URI = 'http://localhost:5000'
-# MODEL_PARAM = {
-#     'model': RandomForestClassifier(),
-#     'grid_parameters': {
-#         'min_samples_leaf': np.arange(1, 5, 1),
-#         'max_depth': np.arange(1, 7, 1),
-#         'max_features': ['auto'],
-#         'n_estimators': np.arange(10, 20, 2)}}
 MODEL_PARAM = {
-    'model': xgb.XGBClassifier(),
+    'model': RandomForestClassifier(),
     'grid_parameters': {
-        'nthread':[4],
-        'objective': ['binary:logistic'],
-        'learning_rate': [0.1, 0.01, 0.05],
-        'max_depth': np.arange(1, 6, 2),
-        'subsample': [0.8],
-        'scale_pos_weight':[1],
-        'colsample_bytree': [0.6, 0.8, 1.0],
-        'n_estimators': np.arange(20, 27, 2),
-        'missing':[-999],
-        'seed': [27]}
-    }
+        'min_samples_leaf': np.arange(1, 5, 1),
+        'max_depth': np.arange(1, 7, 1),
+        'max_features': ['auto'],
+        'n_estimators': np.arange(10, 20, 2)}}
+# MODEL_PARAM = {
+#     'model': xgb.XGBClassifier(),
+#     'grid_parameters': {
+#         'nthread':[4],
+#         'objective': ['binary:logistic'],
+#         'learning_rate': [0.1, 0.01, 0.05],
+#         'max_depth': np.arange(1, 6, 2),
+#         'subsample': [0.8],
+#         'scale_pos_weight':[1],
+#         'colsample_bytree': [0.6, 0.8, 1.0],
+#         'n_estimators': np.arange(20, 27, 2),
+#         'missing':[-999],
+#         'seed': [27]}
+#     }
 
 MLRUNS_DIR = f'{os.getcwd()}/mlruns'
 
@@ -256,12 +256,11 @@ def train_model(ml_dataset_path: str,
     mlruns_dir: str
         Directory to store ML runs
     """
-
     df_ml = pd.read_csv(ml_dataset_path)
     df_ml_test = pd.read_csv(ml_dataset_path_test)
 
     df_ml = clean_ml_dataset(df_ml, target_treshold=0.5)
-    df_ml = df_ml.fillna(-999)
+    df_ml = df_ml.dropna()
 
     #extract patient_id
     df_ml_copy = df_ml.copy()
@@ -269,9 +268,9 @@ def train_model(ml_dataset_path: str,
     df_ml_test_copy = df_ml_test.copy()
     df_ml_test_copy['patient_id'] = df_ml_test_copy['filename'].apply(extract_patient_id)
     df_ml_test_copy = clean_ml_dataset(df_ml_test_copy, target_treshold=0.5)
-    df_ml_test_copy = df_ml_test_copy.fillna(-999)
+    df_ml_test_copy = df_ml_test_copy.dropna()
     i=1
-    mlflow.xgboost.autolog()
+    #mlflow.xgboost.autolog()
     for pat_id in df_ml_copy['patient_id'].unique().tolist(): 
 
         mlflow.set_tracking_uri(tracking_uri)
@@ -353,7 +352,7 @@ def train_model(ml_dataset_path: str,
 
             mlflow.log_param('best_param', grid_search.best_params_)
             mlflow.log_param("ID-Patient", 50)
-            mlflow.log_param("Description", "Xgb pour patient 50")
+            mlflow.log_param("Description", "RandomForest model pour patient 50")
             # mlflow.log_param('algorith', 'rfc')
 
             compute_metrics('train',
@@ -370,8 +369,7 @@ def train_model(ml_dataset_path: str,
 
             # log features importances
             plot_feature_importance(grid_search.best_estimator_.feature_importances_,
-                                     feature_names, "XGBoost ", mlruns_dir)
-
+                                     feature_names, "RandomForest ", mlruns_dir)
 
 
 def parse_train_model_args(args_to_parse: List[str]) -> argparse.Namespace:
