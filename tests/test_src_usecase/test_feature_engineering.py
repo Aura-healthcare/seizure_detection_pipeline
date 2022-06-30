@@ -9,8 +9,8 @@ from sklearn import datasets
 from sqlalchemy import column
 
 sys.path.append('.')
-DATASET_FILE_PATH = "/home/aura-sakhite/seizure_detection_pipeline/data/test_data/test_data_feat_eng.csv"
-DATASET_FILE_PATH_FEAT = "/home/DATA/DetecTeppe-2022-04-08/ml_dataset_2022_04_08/test/df_ml_test.csv"
+DATASET_FILE_PATH = "data/test_data/test_data_feat_eng.csv"
+DATASET_FILE_PATH_FEAT = "data/test_data/test_data_feat_contextual.csv"
 
 from src.usecase.feature_engineering import (
                                                 get_dataset,
@@ -191,7 +191,7 @@ def test_remove_outlier():
 #     # assert pca_df['label'].shape[0] == Y_result_outlier.shape[0]
 
 
-def test_createTimeDomainContextualFeatures():
+def test_createContextualFeatures():
     # Given
     expected_response = False
     dataset_path = DATASET_FILE_PATH_FEAT
