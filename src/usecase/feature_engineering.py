@@ -237,7 +237,6 @@ def createContextualFeatues(dataframe: pd.DataFrame) -> pd.DataFrame:
     dataframe.timestamp = dataframe.timestamp.apply(convert_timestamp)
     dataframe = dataframe.sort_values(by = 'timestamp').reset_index(drop=True)
 
-    
     dataframe['mean_diff'] = dataframe['mean_hr'].diff().shift(-1)
     dataframe['mean_nni_diff'] = dataframe['mean_nni'].diff().shift(-1)
     dataframe['max_hr_diff'] = dataframe['max_hr'].diff().shift(-1)
@@ -246,8 +245,8 @@ def createContextualFeatues(dataframe: pd.DataFrame) -> pd.DataFrame:
     dataframe['month'] = dataframe.timestamp.dt.month
     dataframe['dayOfWeek'] = dataframe.timestamp.dt.dayofweek
     dataframe['hour'] = dataframe.timestamp.dt.hour
-    dataframe['minute'] = dataframe.timestamp.dt.minute
-    dataframe['hour'] = dataframe.timestamp.dt.second
+    # dataframe['minute'] = dataframe.timestamp.dt.minute
+    # dataframe['second'] = dataframe.timestamp.dt.second
 
     for period in [30, 60, 120]:
 
@@ -274,7 +273,7 @@ def createContextualFeatues(dataframe: pd.DataFrame) -> pd.DataFrame:
         dataframe['csi_%s'%(period)] = dataframe['csi'].rolling(window=period, min_periods=10).mean()
         dataframe['Modified_csi_%s'%(period)] = dataframe['Modified_csi'].rolling(window=period, min_periods=10).mean()
         dataframe['cvi_%s'%(period)] = dataframe['cvi'].rolling(window=period, min_periods=10).mean()
-        dataframe['sd1_%s'%(period)] = dataframe['sd1'].rolling(window=period, min_periods=10).mean()
+    #     dataframe['sd1_%s'%(period)] = dataframe['sd1'].rolling(window=period, min_periods=10).mean()
         dataframe['sd2_%s'%(period)] = dataframe['sd2'].rolling(window=period, min_periods=10).mean()
 
     return dataframe.fillna(-999)
