@@ -20,7 +20,7 @@ from src.usecase.feature_engineering import (
                                                 pca_analysis,
                                                 replace_infinite_values_by_nan,
                                                 remove_outlier,
-                                                createTimeDomainContextualFeatues
+                                                createContextualFeatues
                                             )
 
 def test_get_dataset(dataframe):
@@ -199,7 +199,7 @@ def test_createTimeDomainContextualFeatures():
     _ , dataframe = get_dataset(dataset_path, col_to_drop)
 
     # When
-    dataframe_with_contextual_feat = createTimeDomainContextualFeatues(dataframe)
+    dataframe_with_contextual_feat = createContextualFeatues(dataframe)
 
     # Then
     assert dataframe_with_contextual_feat.empty == expected_response
