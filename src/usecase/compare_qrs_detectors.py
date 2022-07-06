@@ -16,7 +16,7 @@ sys.path.append(".")
 from src.usecase.utilities import convert_args_to_dict, generate_output_path
 from src.usecase.apply_ecg_qc import create_ecg_qc_tse_bi
 
-DEFAULT_TOLERENCE_MS = 20  # about 10 ms at 256 HZ
+DEFAULT_TOLERENCE_MS = 50  # about 10 ms at 256 HZ
 CORRESPONDANCE_LABEL = 'clean'
 NO_CORRESPONDANCE_LABEL = 'noisy'
 DEFAULT_length_chunk = 2
