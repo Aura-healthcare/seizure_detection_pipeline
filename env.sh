@@ -35,5 +35,5 @@ export REDIS_PORT=6379
 export FLOWER_PORT=5555
 
 # DATA PATH
-export SYMLINK_FOLDER='test_airflow'
+export SYMLINK_FOLDER=''
 export DATA_PATH='/home/DATA/lateppe/DetecTeppe-2022-4-7/PL'

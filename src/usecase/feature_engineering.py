@@ -308,7 +308,7 @@ def computeContextFeatures(
     return dataframe
 
 
-def computeSeasonerFeatures(dataframe: pd.DataFrame, list_time: list) -> pd.DataFrame:
+def compute_time_features(dataframe: pd.DataFrame, list_time: list) -> pd.DataFrame:
     """
     This function compute seasoner information from timestamp. These informations
     are used to let know the model weither of seasonality informations is in time series.
