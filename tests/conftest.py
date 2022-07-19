@@ -2,8 +2,17 @@ from pytest import fixture
 import numpy as np
 import pandas as pd
 import datetime
+from freezegun import freeze_time
+
+DATASET_FILE_PATH = "data/test_data/test_data_feat_eng.csv"
+DATASET_FILE_PATH_FEAT = "data/test_data/test_data_feat_contextual.csv"
+
+COL_TO_DROP = ['timestamp', 'set']
+
+THRESHOLD = -1.5
 
 @fixture
+@freeze_time("2022-06-13")
 def dataframe():
     data ={
         "mean_hr": 10*[1.],
@@ -23,7 +32,3 @@ def dataframe():
     dataframe = pd.DataFrame(data)
 
     return dataframe
-
-# Given
-# When
-#Then

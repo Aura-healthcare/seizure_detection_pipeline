@@ -261,13 +261,9 @@ def create_final_dataset_with_pca(
         dataframe with principals components and label
     """
 
-    #construction of dataset
-    new_size_dataset = pca_out.components_.shape[1]
-    list_colmuns = []
-    for i in range(1, new_size_dataset):
-        list_colmuns.append("PC"+str(i))
-
-    pca_df = pd.DataFrame(principalComponents, columns=list_colmuns)
+    num_of_variables = pca_out.components_.shape[1]
+    list_variables = ["PC"+str(i) for i in range(1, num_of_variables)]
+    pca_df = pd.DataFrame(principalComponents, columns=list_variables)
 
     pca_df['label'] = y
 
