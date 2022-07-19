@@ -7,11 +7,11 @@ import numpy as np
 
 sys.path.append('.')
 from src.usecase.data_processing.data_loading import get_dataset
-from tests.conftest import COL_TO_DROP, DATASET_FILE_PATH, THRESHOLD
-from src.usecase.data_processing.data_cleaning import (impute_nan_values_by_median, 
-                                                        outlier_detection, remove_outlier, 
-                                                        replace_infinite_values_by_nan)
-
+from src.usecase.data_processing.data_cleaning import (
+    impute_nan_values_by_median,
+    outlier_detection, remove_outlier,
+    replace_infinite_values_by_nan)
+from tests.conftest import (COL_TO_DROP, DATASET_FILE_PATH, THRESHOLD)
 
 def test_replace_infinite_values_by_nan_when_data_has_infinite_values(dataframe):
     # Given
@@ -21,8 +21,8 @@ def test_replace_infinite_values_by_nan_when_data_has_infinite_values(dataframe)
     dataframe = replace_infinite_values_by_nan(dataframe)
     response = dataframe.isin([np.inf, -np.inf]).values.any()
 
-    #Then
-    assert  response == expected_response
+    # Then
+    assert response == expected_response
 
 
 def test_replace_infinite_values_by_nan_when_data_hasnt_infinite_values(dataframe):
@@ -35,7 +35,7 @@ def test_replace_infinite_values_by_nan_when_data_hasnt_infinite_values(datafram
     response = dataframe_without_nan.isin([np.inf, -np.inf]).values.any()
 
     # Then
-    assert  response == expected_response
+    assert response == expected_response
     assert_frame_equal(dataframe_without_nan, returned_dataframe)
 
 
@@ -47,7 +47,7 @@ def test_impute_values_by_median_when_inf_values_exist(dataframe):
 
     # When
     X_imputed, y = impute_nan_values_by_median(dataframe_wihtout_col)
-    response = pd.DataFrame(X_imputed).isna().values.any() 
+    response = pd.DataFrame(X_imputed).isna().values.any()
 
     # Then
     assert response == expected_response
@@ -59,7 +59,8 @@ def test_impute_values_by_median_when_inf_values_not_exist(dataframe):
     expected_response = False
     col_to_drop = COL_TO_DROP
     dataframe_wihtout_col = dataframe.drop(col_to_drop, 1)
-    dataframe_without_infinite = replace_infinite_values_by_nan(dataframe_wihtout_col)
+    dataframe_without_infinite = replace_infinite_values_by_nan(
+        dataframe_wihtout_col)
 
     # When
     X_imputed, y = impute_nan_values_by_median(dataframe_without_infinite)
@@ -86,6 +87,7 @@ def test_outlier_detection_when_dataframe_is_imputed(dataframe):
     assert 'score' in outlier_score
     assert impute_check_df == expected_response
 
+
 def test_outlier_detection_when_dataframe_is_not_imputed():
     # Given
     dataset_path = DATASET_FILE_PATH
@@ -109,10 +111,10 @@ def test_remove_outlier_given_imputed_dataframe_whithout_nan():
     _, dataframe = get_dataset(dataset_path, col_to_drop)
     X_imputed, y = impute_nan_values_by_median(dataframe)
     dataframe_imputed = pd.DataFrame(X_imputed)
-    outlier_score = outlier_detection(X_imputed)  
+    outlier_score = outlier_detection(X_imputed)
 
-    # When  
-    X_result_outlier, Y_result_outlier = remove_outlier(
+    # When
+    X_result_outlier, y_result_outlier = remove_outlier(
         dataframe_imputed,
         outlier_score,
         y,
@@ -121,4 +123,4 @@ def test_remove_outlier_given_imputed_dataframe_whithout_nan():
 
     # Then
     assert X_result_outlier.shape[0] == dataframe_imputed.shape[0]
-    assert Y_result_outlier.shape[0] == y.shape[0]
+    assert y_result_outlier.shape[0] == y.shape[0]

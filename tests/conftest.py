@@ -11,6 +11,13 @@ COL_TO_DROP = ['timestamp', 'set']
 
 THRESHOLD = -1.5
 
+LIST_TIME =  ["dayOfWeek", "month", "hour", "minute"]
+
+LIST_FEAT = ["mean_hr"]
+OPERATION_TYPE = "std"
+LIST_PERIOD = [30, 60]
+
+
 @fixture
 @freeze_time("2022-06-13")
 def dataframe():

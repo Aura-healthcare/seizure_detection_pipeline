@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.neighbors import LocalOutlierFactor
+from scipy.stats import zscore
+from sklearn.decomposition import PCA
 
 
 def replace_infinite_values_by_nan(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -97,7 +99,7 @@ def remove_outlier(
     threshold: float
     threshold: float
         threshold is the limit for removing outliers
-        
+
     returns
     -------
     X_result_outlier: pd.DataFrame
