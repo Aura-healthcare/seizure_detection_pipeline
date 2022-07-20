@@ -19,10 +19,10 @@ def test_replace_infinite_values_by_nan_when_data_has_infinite_values(dataframe)
 
     # When
     dataframe = replace_infinite_values_by_nan(dataframe)
-    response = dataframe.isin([np.inf, -np.inf]).values.any()
+    actual_response = dataframe.isin([np.inf, -np.inf]).values.any()
 
     # Then
-    assert response == expected_response
+    assert actual_response == expected_response
 
 
 def test_replace_infinite_values_by_nan_when_data_hasnt_infinite_values(dataframe):
@@ -32,10 +32,10 @@ def test_replace_infinite_values_by_nan_when_data_hasnt_infinite_values(datafram
 
     # When
     returned_dataframe = replace_infinite_values_by_nan(dataframe_without_nan)
-    response = dataframe_without_nan.isin([np.inf, -np.inf]).values.any()
+    actual_response = dataframe_without_nan.isin([np.inf, -np.inf]).values.any()
 
     # Then
-    assert response == expected_response
+    assert actual_response == expected_response
     assert_frame_equal(dataframe_without_nan, returned_dataframe)
 
 
@@ -47,10 +47,10 @@ def test_impute_values_by_median_when_inf_values_exist(dataframe):
 
     # When
     X_imputed, y = impute_nan_values_by_median(dataframe_wihtout_col)
-    response = pd.DataFrame(X_imputed).isna().values.any()
+    actual_response = pd.DataFrame(X_imputed).isna().values.any()
 
     # Then
-    assert response == expected_response
+    assert actual_response == expected_response
     assert dataframe.shape[0] == y.shape[0]
 
 
@@ -64,10 +64,10 @@ def test_impute_values_by_median_when_inf_values_not_exist(dataframe):
 
     # When
     X_imputed, y = impute_nan_values_by_median(dataframe_without_infinite)
-    response = pd.DataFrame(X_imputed).isna().values.any()
+    actual_response = pd.DataFrame(X_imputed).isna().values.any()
 
     # Then
-    assert response == expected_response
+    assert actual_response == expected_response
     assert dataframe_without_infinite.shape[0] == y.shape[0]
 
 

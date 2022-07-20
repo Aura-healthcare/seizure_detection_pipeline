@@ -1,11 +1,13 @@
 import pytest
 import sys
+from pandas.testing import assert_frame_equal
 
 sys.path.append('.')
-from tests.conftest import DATASET_FILE_PATH_FEAT, LIST_TIME, LIST_FEAT, OPERATION_TYPE, LIST_PERIOD
+from src.usecase.data_processing.time_series_processing import (compute_time_features, 
+                                                                diff_operation_from_features, 
+                                                                perform_op_on_features)
 from src.usecase.data_processing.data_loading import get_dataset
-from src.usecase.data_processing.time_series_processing import compute_time_features, perform_op_on_features
-
+from tests.conftest import DATASET_FILE_PATH_FEAT, LIST_TIME, LIST_FEAT, OPERATION_TYPE, LIST_PERIOD
 
 def test_compute_time_features_given_list_time():
     # Given
@@ -16,9 +18,9 @@ def test_compute_time_features_given_list_time():
 
     # When
     dataframe_with_seasonal_informations = compute_time_features(
-                                                dataframe=dataframe_without_cols,
-                                                list_time=list_time
-                                            )
+        dataframe=dataframe_without_cols,
+        list_time=list_time
+    )
 
     # Then
     assert "dayOfWeek" in dataframe_with_seasonal_informations.keys()
@@ -36,9 +38,9 @@ def test_compute_time_feature_not_given_list_time():
 
     # When
     dataframe_with_seasonal_informations = compute_time_features(
-                                                dataframe=dataframe_without_cols,
-                                                list_time=list_time
-                                            )
+        dataframe=dataframe_without_cols,
+        list_time=list_time
+    )
 
     # Then
     assert "dayOfWeek" not in dataframe_with_seasonal_informations.keys()
@@ -58,11 +60,44 @@ def test_perform_operations_on_features_given_list_features_and_list_period():
 
     # When
     df_with_operation_result = perform_op_on_features(
-                                dataframe=dataframe_without_cols.copy(),
-                                list_feat=list_feat,
-                                list_period=list_period,
-                                operation=operation
-                            )
+        dataframe=dataframe_without_cols.copy(),
+        list_feat=list_feat,
+        list_period=list_period,
+        operation=operation
+    )
     # Then
     assert "mean_hr_30" in df_with_operation_result.keys()
     assert "mean_hr_30" not in dataframe_without_cols.keys()
+
+
+def test_diff_operation_from_features_given_list_feat():
+    # Given
+    dataset_path = DATASET_FILE_PATH_FEAT
+    col_to_drop = []
+    list_feat = LIST_FEAT
+    _, dataframe_without_cols = get_dataset(dataset_path, col_to_drop)
+
+    # When
+    df_with_diff_features = diff_operation_from_features(
+                                dataframe=dataframe_without_cols, 
+                                list_feat=list_feat)
+
+    # Then
+    assert "mean_hr_diff" in df_with_diff_features.keys()
+    assert "mean_nni_diff" not in df_with_diff_features.keys()
+
+
+def test_diff_operation_from_features_not_given_list_feat():
+    # Given
+    dataset_path = DATASET_FILE_PATH_FEAT
+    col_to_drop = []
+    list_feat = []
+    _, dataframe_with_cols = get_dataset(dataset_path, col_to_drop)
+
+    # When
+    df_with_diff_features = diff_operation_from_features(
+                                dataframe=dataframe_with_cols, 
+                                list_feat=list_feat)
+
+    # Then
+    assert_frame_equal(dataframe_with_cols, df_with_diff_features)

@@ -103,5 +103,28 @@ def perform_op_on_features(dataframe: pd.DataFrame, list_feat: list, list_period
     return dataframe
 
 
+def diff_operation_from_features(dataframe: pd.DataFrame, list_feat: list) -> pd.DataFrame:
+    """
+    This function will  compute difference from chosen features. It aims
+    to know the variability of features.
+    parameters
+    ----------
+    dataframe: pd.DataFrame
+        dataframe constructed from dataset
+    list_feat: list
+        list of features that we want to use to compute difference operation.
+    
+    return
+    ------
+    dataframe: pd.DataFrame
+        new dataframe with variability informations.
+    """
+
+    for feat in list_feat:
+        dataframe[feat+'_diff'] = dataframe[feat].diff().shift(-1) 
+    
+    return dataframe
+
+
 def convert_timestamp(timestamp):
     return pd.to_datetime(timestamp)
