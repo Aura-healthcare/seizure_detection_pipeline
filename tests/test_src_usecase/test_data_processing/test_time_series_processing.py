@@ -51,7 +51,7 @@ def test_compute_time_feature_not_given_list_time():
     assert "minute" not in dataframe_with_seasonal_informations.columns
 
 
-def test_perform_operations_on_features_given_list_features_and_list_period():
+def test_perform_operations_on_features_given_list_features_and_list_period_check_periods_features_are_created():
     # Given
     dataset_path = DATASET_FILE_PATH_FEAT
     col_to_drop = []
@@ -72,7 +72,7 @@ def test_perform_operations_on_features_given_list_features_and_list_period():
     assert "mean_nni_p30" not in dataframe_without_cols.keys()
 
 
-def test_diff_operation_from_features_given_list_feat():
+def test_diff_operation_from_features_given_list_feat_check_diff_feature_created():
     # Given
     dataset_path = DATASET_FILE_PATH_FEAT
     col_to_drop = []
@@ -89,7 +89,7 @@ def test_diff_operation_from_features_given_list_feat():
     assert "mean_nni_diff" not in df_with_diff_features.columns
 
 
-def test_diff_operation_from_features_not_given_list_feat_then_dataframes_are_identic():
+def test_diff_operation_from_features_not_given_list_feat_check_dataframes_are_identic():
     # Given
     dataset_path = DATASET_FILE_PATH_FEAT
     col_to_drop = []

@@ -72,7 +72,7 @@ def test_impute_values_by_median_when_inf_values_not_exist(dataframe):
     assert dataframe_without_infinite.shape[0] == y.shape[0]
 
 
-def test_outlier_detection_when_dataframe_is_imputed(dataframe):
+def test_outlier_detection_when_dataframe_is_imputed_check_score_column_created(dataframe):
     # Given
     expected_response = False
     col_to_drop = COL_TO_DROP
@@ -82,14 +82,14 @@ def test_outlier_detection_when_dataframe_is_imputed(dataframe):
 
     # When
     outlier_score = outlier_detection(X_imputed)
-    impute_check_df = dataframe_imputed.isna().values.any()
+    actual_response = dataframe_imputed.isna().values.any()
 
     # Then
     assert 'score' in outlier_score
-    assert impute_check_df == expected_response
+    assert actual_response == expected_response
 
 
-def test_outlier_detection_when_dataframe_is_not_imputed():
+def test_outlier_detection_when_dataframe_is_not_imputed_check_raise_exception():
     # Given
     dataset_path = DATASET_FILE_PATH
     col_to_drop = COL_TO_DROP
@@ -104,7 +104,7 @@ def test_outlier_detection_when_dataframe_is_not_imputed():
         outlier_score = outlier_detection(X)
 
 
-def test_remove_outlier_given_imputed_dataframe_whithout_nan():
+def test_remove_outlier_given_imputed_dataframe_without_outlier_check_shape_are_identic():
     # Given
     dataset_path = DATASET_FILE_PATH
     col_to_drop = COL_TO_DROP
