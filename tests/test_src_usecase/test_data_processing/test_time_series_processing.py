@@ -1,13 +1,15 @@
 import pytest
 import sys
 from pandas.testing import assert_frame_equal
+from src.usecase.constants import TempFeaturesOperation
 
 sys.path.append('.')
-from src.usecase.data_processing.time_series_processing import (compute_time_features, 
-                                                                diff_operation_from_features, 
+from src.usecase.data_processing.time_series_processing import (compute_time_features, create_rolling_variables_given_feature, 
+                                                                diff_operation_from_features, compute_diff_for_feature,
                                                                 perform_op_on_features)
 from src.usecase.data_processing.data_loading import get_dataset
 from tests.conftest import DATASET_FILE_PATH_FEAT, LIST_TIME, LIST_FEAT, OPERATION_TYPE, LIST_PERIOD
+
 
 def test_compute_time_features_given_list_time():
     # Given
@@ -23,10 +25,10 @@ def test_compute_time_features_given_list_time():
     )
 
     # Then
-    assert "dayOfWeek" in dataframe_with_seasonal_informations.keys()
-    assert "month" in dataframe_with_seasonal_informations.keys()
-    assert "hour" in dataframe_with_seasonal_informations.keys()
-    assert "minute" in dataframe_with_seasonal_informations.keys()
+    assert "dayOfWeek" in dataframe_with_seasonal_informations.columns
+    assert "month" in dataframe_with_seasonal_informations.columns
+    assert "hour" in dataframe_with_seasonal_informations.columns
+    assert "minute" in dataframe_with_seasonal_informations.columns
 
 
 def test_compute_time_feature_not_given_list_time():
@@ -43,10 +45,10 @@ def test_compute_time_feature_not_given_list_time():
     )
 
     # Then
-    assert "dayOfWeek" not in dataframe_with_seasonal_informations.keys()
-    assert "month" not in dataframe_with_seasonal_informations.keys()
-    assert "hour" not in dataframe_with_seasonal_informations.keys()
-    assert "minute" not in dataframe_with_seasonal_informations.keys()
+    assert "dayOfWeek" not in dataframe_with_seasonal_informations.columns
+    assert "month" not in dataframe_with_seasonal_informations.columns
+    assert "hour" not in dataframe_with_seasonal_informations.columns
+    assert "minute" not in dataframe_with_seasonal_informations.columns
 
 
 def test_perform_operations_on_features_given_list_features_and_list_period():
@@ -62,12 +64,12 @@ def test_perform_operations_on_features_given_list_features_and_list_period():
     df_with_operation_result = perform_op_on_features(
         dataframe=dataframe_without_cols.copy(),
         list_feat=list_feat,
-        list_period=list_period,
         operation=operation
     )
+
     # Then
-    assert "mean_hr_30" in df_with_operation_result.keys()
-    assert "mean_hr_30" not in dataframe_without_cols.keys()
+    assert "mean_hr_p30" in df_with_operation_result.keys()
+    assert "mean_nni_p30" not in dataframe_without_cols.keys()
 
 
 def test_diff_operation_from_features_given_list_feat():
@@ -83,11 +85,11 @@ def test_diff_operation_from_features_given_list_feat():
                                 list_feat=list_feat)
 
     # Then
-    assert "mean_hr_diff" in df_with_diff_features.keys()
-    assert "mean_nni_diff" not in df_with_diff_features.keys()
+    assert "mean_hr_diff" in df_with_diff_features.columns
+    assert "mean_nni_diff" not in df_with_diff_features.columns
 
 
-def test_diff_operation_from_features_not_given_list_feat():
+def test_diff_operation_from_features_not_given_list_feat_then_dataframes_are_identic():
     # Given
     dataset_path = DATASET_FILE_PATH_FEAT
     col_to_drop = []
@@ -101,3 +103,49 @@ def test_diff_operation_from_features_not_given_list_feat():
 
     # Then
     assert_frame_equal(dataframe_with_cols, df_with_diff_features)
+
+
+def test_create_rolling_variables_given_feature_and_operation_check_all_periods_created():
+    # Given
+    dataset_path = DATASET_FILE_PATH_FEAT
+    col_to_drop = []
+    feature_name = "mean_hr"
+    operation = TempFeaturesOperation.mean.name
+    _, df_with_rolling_variables = get_dataset(dataset_path, col_to_drop)
+
+    # When
+    create_rolling_variables_given_feature(dataframe=df_with_rolling_variables, 
+                                            feature=feature_name, operation=operation) 
+
+    # Then
+    assert "mean_hr_p30" in df_with_rolling_variables.columns
+    assert "mean_hr_p60" in df_with_rolling_variables.columns
+    assert "mean_hr_p120" in df_with_rolling_variables.columns
+
+
+def test_compute_diff_for_feature_given_featuer_check_feature_diff_created():
+    # Given
+    dataset_path = DATASET_FILE_PATH_FEAT
+    col_to_drop = []
+    feature_name = "mean_hr"
+    _, df_with_diff_variables = get_dataset(dataset_path, col_to_drop)
+
+    # When
+    compute_diff_for_feature(dataframe=df_with_diff_variables, feature=feature_name)
+
+    # Then
+    assert "mean_hr_diff" in df_with_diff_variables.columns
+
+
+def test_perform_op_on_features_given_two_features_check_feature_period_are_created_for_both_features():
+    # Given
+    dataset_path = DATASET_FILE_PATH_FEAT
+    col_to_drop = []
+    list_features = ["mean_hr", "mean_nni"]
+    _, df_with_period_variables = get_dataset(dataset_path, col_to_drop)
+    # When
+    perform_op_on_features(dataframe=df_with_period_variables, list_feat=list_features, operation=TempFeaturesOperation.mean.name)
+
+    # Then
+    assert "mean_hr_p30" in df_with_period_variables.columns
+    assert "mean_nni_p30" in df_with_period_variables.columns

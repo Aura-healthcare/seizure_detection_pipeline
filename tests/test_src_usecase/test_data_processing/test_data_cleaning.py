@@ -13,6 +13,7 @@ from src.usecase.data_processing.data_cleaning import (
     replace_infinite_values_by_nan)
 from tests.conftest import (COL_TO_DROP, DATASET_FILE_PATH, THRESHOLD)
 
+
 def test_replace_infinite_values_by_nan_when_data_has_infinite_values(dataframe):
     # Given
     expected_response = False
