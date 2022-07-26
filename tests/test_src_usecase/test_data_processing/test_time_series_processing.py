@@ -11,7 +11,7 @@ from src.usecase.data_processing.data_loading import get_dataset
 from tests.conftest import DATASET_FILE_PATH_FEAT, LIST_TIME, LIST_FEAT, OPERATION_TYPE, LIST_PERIOD
 
 
-def test_compute_time_features_given_list_time():
+def test_compute_time_features_given_list_time_check_seasonals_features_are_created():
     # Given
     dataset_path = DATASET_FILE_PATH_FEAT
     col_to_drop = []
@@ -31,7 +31,7 @@ def test_compute_time_features_given_list_time():
     assert "minute" in dataframe_with_seasonal_informations.columns
 
 
-def test_compute_time_feature_not_given_list_time():
+def test_compute_time_feature_not_given_list_time_check_seasonals_features_not_created():
     # Given
     dataset_path = DATASET_FILE_PATH_FEAT
     col_to_drop = []

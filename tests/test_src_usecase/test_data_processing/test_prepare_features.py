@@ -6,7 +6,7 @@ from tests.conftest import DATASET_FILE_PATH_FEAT
 from src.usecase.data_processing.prepare_features import prepare_features_with_io
 
 
-def test_prepare_features_with_io():
+def test_prepare_features_with_io_check_output_dataframe_is_created():
     # Given
     expected_response = False
     dataset_path = DATASET_FILE_PATH_FEAT,
@@ -18,7 +18,8 @@ def test_prepare_features_with_io():
         dataset_path=dataset_path,
         col_to_drop=col_to_drop,
         features_path=features_path)
-    res = pd.read_csv(features_path)
+
+    actual_response = pd.read_csv(features_path)
 
     # Then
-    assert res.empty == expected_response
+    assert actual_response.empty == expected_response

@@ -57,12 +57,11 @@ def prepare_features(
     list_time = ["dayOfTheWeek", "month", "hour"]
     dataframe = compute_time_features(dataframe=dataframe, list_time=list_time)
 
-    list_feat, list_period = ["mean_hr", "mean_nni"], [30, 60]
+    list_feat = ["mean_hr", "mean_nni"]
     dataframe = compute_contextuals_features(
                     dataframe=dataframe, 
                     operation="mean",
-                    list_feat=list_feat,
-                    list_period=list_period
+                    list_feat=list_feat
                     )
 
     return dataframe

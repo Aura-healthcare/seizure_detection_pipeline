@@ -14,7 +14,7 @@ from src.usecase.data_processing.data_cleaning import (
 from tests.conftest import (COL_TO_DROP, DATASET_FILE_PATH, THRESHOLD)
 
 
-def test_replace_infinite_values_by_nan_when_data_has_infinite_values(dataframe):
+def test_replace_infinite_values_by_nan_when_data_has_infinite_values_check_no_exist_infinite_values(dataframe):
     # Given
     expected_response = False
 
@@ -26,7 +26,7 @@ def test_replace_infinite_values_by_nan_when_data_has_infinite_values(dataframe)
     assert actual_response == expected_response
 
 
-def test_replace_infinite_values_by_nan_when_data_hasnt_infinite_values(dataframe):
+def test_replace_infinite_values_by_nan_when_data_hasnt_infinite_values_check_any_operation_done(dataframe):
     # Given
     expected_response = False
     dataframe_without_nan = dataframe.replace([np.inf, -np.inf], np.nan)
@@ -40,7 +40,7 @@ def test_replace_infinite_values_by_nan_when_data_hasnt_infinite_values(datafram
     assert_frame_equal(dataframe_without_nan, returned_dataframe)
 
 
-def test_impute_values_by_median_when_inf_values_exist(dataframe):
+def test_impute_values_by_median_when_inf_values_exist_check_imputation_done(dataframe):
     # Given
     expected_response = False
     col_to_drop = COL_TO_DROP
@@ -55,7 +55,7 @@ def test_impute_values_by_median_when_inf_values_exist(dataframe):
     assert dataframe.shape[0] == y.shape[0]
 
 
-def test_impute_values_by_median_when_inf_values_not_exist(dataframe):
+def test_impute_values_by_median_when_inf_values_not_exist_check_imputation_done(dataframe):
     # Given
     expected_response = False
     col_to_drop = COL_TO_DROP
