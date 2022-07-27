@@ -1,8 +1,4 @@
-from src.usecase.feature_engineering import (
-    replace_infinite_values_by_nan,
-    impute_nan_values_by_median,
-    prepare_features_with_io
-)
+from src.usecase.data_processing.prepare_features import prepare_features_with_io
 from src.usecase.train_model import (train_pipeline_with_io)
 from dags.config import (
     DEFAULT_ARGS,
@@ -20,9 +16,6 @@ from dags.config import (
 import sys
 
 from airflow.decorators import dag, task
-
-sys.path.append('.')
-
 
 @dag(default_args=DEFAULT_ARGS,
      start_date=START_DATE,
@@ -54,6 +47,7 @@ def train_pipeline():
         train_pipeline_with_io(feature_tain_path, feature_test_path,
                             tracking_uri=tracking_uri, model_param=model_param, mlruns_dir=mlruns_dir)
 
+    # Orchestration
     features_train_path = FEATURE_TRAIN_PATH
     features_test_path = FEATURE_TEST_PATH
 
