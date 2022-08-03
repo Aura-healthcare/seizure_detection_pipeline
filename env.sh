@@ -36,4 +36,4 @@ export FLOWER_PORT=5555
 
 # DATA PATH
 export SYMLINK_FOLDER=''
-export DATA_PATH='/home/DATA/lateppe/DetecTeppe-2022-4-7/PL'
+export DATA_PATH='/home/DATA/DetecTeppe-2022-04-08/ml_dataset_2022_04_08'
