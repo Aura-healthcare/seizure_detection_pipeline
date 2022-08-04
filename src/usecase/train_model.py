@@ -32,7 +32,6 @@ import xgboost as xgb
 
 sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict
-from src.usecase.feature_engineering import extract_patient_id, create_X_y_set
 
 TRACKING_URI = 'http://localhost:5000'
 # MODEL_PARAM = {
@@ -337,10 +336,7 @@ def train_model(
                 drop('label', 1).\
                 drop('timestamp', 1).\
                 drop('filename', 1).\
-                drop('interval_index', 1).\
-                drop('interval_start_time', 1).\
-                drop('patient_id', 1).\
-                drop('set', 1)
+                drop('patient_id', 1)
 
             feature_names = X_train.columns
 
@@ -349,10 +345,7 @@ def train_model(
                 drop('label', 1).\
                 drop('timestamp', 1).\
                 drop('filename', 1).\
-                drop('interval_index', 1).\
-                drop('interval_start_time', 1).\
-                drop('patient_id', 1).\
-                drop('set', 1)
+                drop('patient_id', 1)
 
         else:
             y = df_ml['label']

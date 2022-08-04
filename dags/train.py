@@ -20,6 +20,7 @@ from airflow.decorators import dag, task
 @dag(default_args=DEFAULT_ARGS,
      start_date=START_DATE,
      schedule_interval=SCHEDULE_INTERVAL,
+     catchup=False,
      concurrency=CONCURRENCY)
 def train_pipeline():
 
@@ -27,14 +28,14 @@ def train_pipeline():
     def prepare_features_task(
             dataset_path: str,
             col_to_drop: list,
-            features_path: str) -> str:
+            feature_path: str) -> str:
 
         prepare_features_with_io(
             dataset_path=dataset_path,
             col_to_drop=col_to_drop,
-            features_path=features_path)
+            features_path=feature_path)
 
-        return features_path
+        return feature_path
 
     @task
     def train_model_task(
@@ -61,7 +62,7 @@ def train_pipeline():
         col_to_drop=COL_TO_DROP,
         feature_path=features_test_path)
 
-    train_model_task(ml_train_path, ml_test_path, tracking_uri=TRACKING_URI,
+    train_model_task(feature_tain_path=ml_train_path, feature_test_path=ml_test_path, tracking_uri=TRACKING_URI,
                      model_param=MODEL_PARAM, mlruns_dir=MLRUNS_DIR)
 
 

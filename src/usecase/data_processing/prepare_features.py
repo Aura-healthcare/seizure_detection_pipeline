@@ -49,10 +49,14 @@ def prepare_features(
     dataframe: pd.DataFrame
     """
 
-    dataframe = pd.concat(pd.read_csv(p) for p in dataset_path).drop(col_to_drop, 1)
+    _, dataframe = get_dataset(dataset_path, col_to_drop)
     
 
     dataframe = replace_infinite_values_by_nan(dataframe=dataframe)
+
+    dataframe['patient_id'] = dataframe.filename.apply(extract_patient_id)
+
+    dataframe = dataframe[dataframe.patient_id==22]
 
     list_time = ["dayOfTheWeek", "month", "hour"]
     dataframe = compute_time_features(dataframe=dataframe, list_time=list_time)
