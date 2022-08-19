@@ -33,7 +33,7 @@ import xgboost as xgb
 sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict
 
-TRACKING_URI = 'http://localhost:5000'
+TRACKING_URI = 'http://mlflow:5000'
 # MODEL_PARAM = {
 #     'model': RandomForestClassifier(),
 #     'grid_parameters': {

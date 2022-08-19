@@ -24,7 +24,7 @@ CONCURRENCY = 4
 SCHEDULE_INTERVAL = datetime.timedelta(minutes=10)
 DEFAULT_ARGS = {'owner': 'airflow'}
 
-TRACKING_URI = 'http://0.0.0.0:5000'
+TRACKING_URI = 'http://mlflow:5000'
 
 # MODEL_PARAM = {
 #     'model': RandomForestClassifier(),
