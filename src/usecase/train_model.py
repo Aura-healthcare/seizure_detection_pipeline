@@ -289,28 +289,15 @@ def train_pipeline(ml_dataset_path: str,
     df_ml = clean_ml_dataset(df_ml, target_treshold=0.5)
     df_ml = df_ml.dropna()
 
-    #extract patient_id
-    df_ml_origin = df_ml.copy()
-    df_ml['patient_id'] = df_ml['filename'].apply(extract_patient_id)
-
-    df_ml_test_origin = df_ml_test.copy()
-    df_ml_test['patient_id'] = df_ml_test['filename'].apply(extract_patient_id)
     df_ml_test = clean_ml_dataset(df_ml_test, target_treshold=0.5)
     df_ml_test = df_ml_test.dropna()
     
-    for pat_id in df_ml['patient_id'].unique().tolist(): 
-        df_ml = df_ml[df_ml['patient_id']==22]
-        df_ml_test = df_ml_test[df_ml_test['patient_id']==22]
-        i=1
-        if i>1:
-            break
-        train_model(
-            df_ml=df_ml,
-            df_ml_test=df_ml_test,
-            tracking_uri=TRACKING_URI,
-            model_param=MODEL_PARAM,
-            mlruns_dir=MLRUNS_DIR)
-        i=i+1
+    train_model(
+        df_ml=df_ml,
+        df_ml_test=df_ml_test,
+        tracking_uri=TRACKING_URI,
+        model_param=MODEL_PARAM,
+        mlruns_dir=MLRUNS_DIR)
 
 
 def train_model(
