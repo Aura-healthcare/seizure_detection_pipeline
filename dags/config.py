@@ -1,7 +1,7 @@
 import os
-import os
 import sys
 from datetime import datetime as dt
+from sklearn.ensemble import RandomForestClassifier
 import datetime
 import xgboost as xgb
 import numpy as np
@@ -26,14 +26,6 @@ DEFAULT_ARGS = {'owner': 'airflow'}
 
 TRACKING_URI = 'http://mlflow:5000'
 
-# MODEL_PARAM = {
-#     'model': RandomForestClassifier(),
-#     'grid_parameters': {
-#         'min_samples_leaf': np.arange(1, 5, 1),
-#         'max_depth': np.arange(1, 7, 1),
-#         'max_features': ['auto'],
-#         'n_estimators': np.arange(10, 20, 2)}}
-
 MODEL_PARAM = {
     'model': xgb.XGBClassifier(),
     'grid_parameters': {
@@ -44,5 +36,27 @@ MODEL_PARAM = {
         'n_estimators': np.arange(15, 25, 2),
         'missing':[-999]}
     }
+
+MODELS_PARAM = {
+    'xgboost': {
+        'model': xgb.XGBClassifier(),
+        'grid_parameters': {
+            'nthread':[4],
+            'learning_rate': [0.1, 0.01, 0.05],
+            'max_depth': np.arange(3, 5, 2),
+            'scale_pos_weight':[1],
+            'n_estimators': np.arange(15, 25, 2),
+            'missing':[-999]
+        }
+    },
+    'random_forest':  {
+        'model': RandomForestClassifier(),
+        'grid_parameters': {
+            'min_samples_leaf': np.arange(1, 5, 1),
+            'max_depth': np.arange(1, 7, 1),
+            'max_features': ['auto'],
+            'n_estimators': np.arange(10, 20, 2)}
+    }
+}
 
 MLRUNS_DIR = f'{os.getcwd()}/mlruns'

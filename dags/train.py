@@ -5,7 +5,7 @@ from dags.config import (
     START_DATE,
     CONCURRENCY,
     SCHEDULE_INTERVAL,
-    MODEL_PARAM,
+    MODELS_PARAM,
     MLRUNS_DIR,
     TEST_DATA,
     TRACKING_URI,
@@ -42,7 +42,7 @@ def train_pipeline():
             feature_tain_path: str,
             feature_test_path: str,
             tracking_uri: str = TRACKING_URI,
-            model_param: dict = MODEL_PARAM,
+            model_param: dict = MODELS_PARAM['xgboost'],
             mlruns_dir: str = MLRUNS_DIR) -> None:
 
         train_pipeline_with_io(feature_tain_path, feature_test_path,
@@ -63,7 +63,7 @@ def train_pipeline():
         feature_path=features_test_path)
 
     train_model_task(feature_tain_path=ml_train_path, feature_test_path=ml_test_path, tracking_uri=TRACKING_URI,
-                     model_param=MODEL_PARAM, mlruns_dir=MLRUNS_DIR)
+                     model_param=MODELS_PARAM['xgboost'], mlruns_dir=MLRUNS_DIR)
 
 
 train_pipeline_dag = train_pipeline()
