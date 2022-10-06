@@ -21,7 +21,7 @@ COL_TO_DROP = ['interval_index', 'interval_start_time', 'set']
 
 START_DATE = dt(2021, 8, 1)
 CONCURRENCY = 4
-SCHEDULE_INTERVAL = datetime.timedelta(minutes=10)
+SCHEDULE_INTERVAL = datetime.timedelta(hours=2)
 DEFAULT_ARGS = {'owner': 'airflow'}
 
 TRACKING_URI = 'http://mlflow:5000'

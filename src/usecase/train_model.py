@@ -21,6 +21,7 @@ import argparse
 import mlflow
 import os
 import sys
+import seaborn as sns
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score, recall_score,\
@@ -29,6 +30,7 @@ from sklearn.ensemble import RandomForestClassifier
 # from imblearn.over_sampling import RandomOverSampler
 from typing import List
 import xgboost as xgb
+from src.usecase.data_processing.prepare_features import extract_patient_id
 
 sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict
@@ -215,7 +217,7 @@ def plot_feature_importance(importance: np.array, feat_names: list, model_type: 
 
     #Define size of bar plot
     plt.figure(figsize=(10,8))
-    plt.barh(x=fi_df['feature_names'], y=fi_df['feature_importance'])
+    sns.barplot(x=fi_df['feature_importance'], y=fi_df['feature_names'])
     #Add chart labels
     plt.title(model_type + 'FEATURE IMPORTANCE')
     plt.xlabel('FEATURE IMPORTANCE')
@@ -250,6 +252,14 @@ def train_pipeline_with_io(ml_dataset_cleaned_path: str,
     
     df_ml = pd.read_csv(ml_dataset_cleaned_path)
     df_ml_test = pd.read_csv(ml_dataset_path_cleaned_test)
+
+    df_ml['patient_id'] = df_ml['filename'].apply(extract_patient_id)
+    df_ml_test['patient_id'] = df_ml_test['filename'].apply(extract_patient_id)
+
+    df_ml = df_ml[(df_ml['patient_id'] == 22) | (df_ml['patient_id'] == 45)\
+        | (df_ml['patient_id'] == 39) | (df_ml['patient_id'] == 34)]
+    df_ml_test = df_ml_test[(df_ml_test['patient_id'] == 22) | (df_ml_test['patient_id'] == 45) \
+        | (df_ml_test['patient_id'] == 39) | (df_ml_test['patient_id'] == 34)]
 
     train_model(
         df_ml=df_ml,
