@@ -25,6 +25,7 @@ x-airflow-common:
     - ./output:/opt/airflow/output
     - ./models:/opt/airflow/models
     - ./src:/opt/airflow/src
+    - ./mlruns:/mlruns
     - ./great_expectations:/opt/airflow/great_expectations
   user: "${AIRFLOW_UID}:0"
   depends_on:
@@ -227,6 +228,8 @@ services:
       - '${MLFLOW_PORT}:5000'
     volumes: 
       - ./mlruns:/mlruns
+    environment:
+      - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
   ge_data_docs:
     image: flashspys/nginx-static
