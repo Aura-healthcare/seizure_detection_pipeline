@@ -11,6 +11,7 @@ DATA_FOLDER = os.path.join(PROJECT_FOLDER, 'data')
 
 ML_DATASET_OUTPUT_FOLDER = "/opt/airflow/output"
 AIRFLOW_PREFIX_TO_DATA = '/opt/airflow/data/'
+MLRUNS_DIR = '/mlruns'
 
 TRAIN_DATA = os.path.join(AIRFLOW_PREFIX_TO_DATA, "train/df_ml_train.csv")
 TEST_DATA = os.path.join(AIRFLOW_PREFIX_TO_DATA , "test/df_ml_test.csv")
@@ -58,5 +59,3 @@ MODELS_PARAM = {
             'n_estimators': np.arange(10, 20, 2)}
     }
 }
-
-MLRUNS_DIR = f'{os.getcwd()}/mlruns'

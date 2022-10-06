@@ -16,12 +16,12 @@ fonctions:
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import seaborn as sns
 import argparse
 import mlflow
+import matplotlib.pyplot as plt
 import os
 import sys
-import seaborn as sns
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score, recall_score,\
@@ -36,13 +36,6 @@ sys.path.append('.')
 from src.usecase.utilities import convert_args_to_dict
 
 TRACKING_URI = 'http://mlflow:5000'
-# MODEL_PARAM = {
-#     'model': RandomForestClassifier(),
-#     'grid_parameters': {
-#         'min_samples_leaf': np.arange(1, 5, 1),
-#         'max_depth': np.arange(1, 7, 1),
-#         'max_features': ['auto'],
-#         'n_estimators': np.arange(10, 20, 2)}}
 MODEL_PARAM = {
     'model': xgb.XGBClassifier(),
     'grid_parameters': {
@@ -112,8 +105,8 @@ def compute_metrics(prefix: str,
         print('cannot compute ROC_AUC_score')
 
     try:
-        titles_options = [(f'{prefix} - Confusion Matrix', None),
-                          (f'{prefix} - Normalized Confusion Matrix', 'true')]
+        titles_options = [(f'{prefix}-Confusion Matrix', None),
+                          (f'{prefix}-Normalized Confusion Matrix', 'true')]
         for title, normalize in titles_options:
 
             if normalize is None:
@@ -127,12 +120,12 @@ def compute_metrics(prefix: str,
             disp.ax_.set_title(title)
             temp_name = f'{mlruns_dir}/{title}.png'
             plt.savefig(temp_name)
-            mlflow.log_artifact(temp_name, "confusion-matrix-plots")
+            mlflow.log_artifact(temp_name)
 
         if total_seconds is not None:
             titles_options = [
-                (f'{prefix} - Confusion Matrix Minutes', None, 'minutes'),
-                (f'{prefix} - Confusion Matrix Seconds', None, 'seconds')]
+                (f'{prefix}-Confusion Matrix Minutes', None, 'minutes'),
+                (f'{prefix}-Confusion Matrix Seconds', None, 'seconds')]
 
             for title, normalize, time_unit in titles_options:
 
@@ -149,7 +142,7 @@ def compute_metrics(prefix: str,
                 disp.ax_.set_title(title)
                 temp_name = f'{mlruns_dir}/{title}.png'
                 plt.savefig(temp_name)
-                mlflow.log_artifact(temp_name, "confusion-matrix-plots")
+                mlflow.log_artifact(temp_name)
 
     except ValueError:
         print('cannot generate confusion matrices')
@@ -253,6 +246,9 @@ def train_pipeline_with_io(ml_dataset_cleaned_path: str,
     df_ml = pd.read_csv(ml_dataset_cleaned_path)
     df_ml_test = pd.read_csv(ml_dataset_path_cleaned_test)
 
+    df_ml = clean_ml_dataset(df_ml)
+    df_ml_test = clean_ml_dataset(df_ml_test)
+
     df_ml['patient_id'] = df_ml['filename'].apply(extract_patient_id)
     df_ml_test['patient_id'] = df_ml_test['filename'].apply(extract_patient_id)
 
@@ -322,7 +318,7 @@ def train_model(
 
     mlflow.set_tracking_uri(tracking_uri)
     with mlflow.start_run():
-        
+        print(mlflow.get_artifact_uri())
         
         feature_names = []
 
@@ -378,11 +374,10 @@ def train_model(
         y_test_pred = grid_search.predict(X_test)
 
         # Model and performance logging
-        mlflow.sklearn.log_model(grid_search, 'model')
+        mlflow.sklearn.log_model(grid_search, 'xgboost')
 
         mlflow.log_param('best_param', grid_search.best_params_)
-        mlflow.log_param("ID-Patient", 18)
-        mlflow.log_param("Description", "RandomForest model pour patient {18}")
+        mlflow.log_param("Description", "Xgboost model sur les patients {22, 34, 39, 45}")
         # mlflow.log_param('algorith', 'rfc')
 
         compute_metrics('train',
@@ -398,8 +393,8 @@ def train_model(
                         mlruns_dir=mlruns_dir)
 
         # log features importances
-        plot_feature_importance(grid_search.best_estimator_.feature_importances_,
-                                    feature_names, "RandomForest ", mlruns_dir)
+        # plot_feature_importance(grid_search.best_estimator_.feature_importances_,
+                                    # feature_names, "RandomForest ", mlruns_dir)
 
 
 

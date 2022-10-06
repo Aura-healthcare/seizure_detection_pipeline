@@ -4,9 +4,10 @@ click==8.0.1
 ecg-qc==1.0b5
 great-expectations==0.13.25
 hrv-analysis==1.0.4
-mlflow==1.28
+mlflow==1.23.1
 numpy==1.19.5
 pandas==1.1.5
+seaborn==0.11.2
 psycopg2-binary==2.8.6
 py-ecg-detectors==1.0.2
 pyEDFlib==0.1.22

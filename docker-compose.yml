@@ -25,6 +25,7 @@ x-airflow-common:
     - ./output:/opt/airflow/output
     - ./models:/opt/airflow/models
     - ./src:/opt/airflow/src
+    - ./mlruns:/mlruns
     - ./great_expectations:/opt/airflow/great_expectations
   user: "${AIRFLOW_UID}:0"
   depends_on:
