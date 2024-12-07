@@ -35,4 +35,5 @@ export REDIS_PORT=6379
 export FLOWER_PORT=5555
 
 # DATA PATH
-export DATA_PATH='./data'
+export SYMLINK_FOLDER=''
+export DATA_PATH='/home/DATA/DetecTeppe-2022-04-08/ml_dataset_2022_04_08'

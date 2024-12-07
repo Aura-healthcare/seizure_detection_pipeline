@@ -39,7 +39,17 @@ You need to have [docker](https://docs.docker.com/get-docker/) and [docker-compo
 ## Getting started
 
 ### Setting up environment and launch docker-compose
-After cloning this repository, replace the value of the environment variable ```DATA_PATH``` in the *env.sh* file with the absolute path of the data you are working with.
+
+Using symbolic link is most conveniant use to import data stored in another path. In this case, first create a symbolic link in data folder:
+```sh
+    $ ln -s -r PATH_TO_DATA_FOLDER data/
+```
+
+Then update *env.sh* file with the the name of the folder of symbolic link at last line:
+
+```sh
+export SYMLINK_FOLDER='SYMBOLIC_NAME_FOLDER_NAME'
+```
 
 You can now run these commands :
 
@@ -61,7 +71,10 @@ You can now run these commands :
 |Flower|5555|
 |Redis|6379|
 
-
+Before running Airflow, you must fetch data with:
+```sh
+    $ make fetch_data
+```
 
 ### UI
 Once the services are up, you can interact with their UI :

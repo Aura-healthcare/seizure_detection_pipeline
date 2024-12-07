@@ -21,10 +21,11 @@ x-airflow-common:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./scripts:/opt/airflow/scripts
-    - ${DATA_PATH}:/opt/airflow/data
+    - ${DATA_PATH}/${SYMLINK_FOLDER}:/opt/airflow/data/${SYMLINK_FOLDER}
     - ./output:/opt/airflow/output
     - ./models:/opt/airflow/models
     - ./src:/opt/airflow/src
+    - ./mlruns:/mlruns
     - ./great_expectations:/opt/airflow/great_expectations
   user: "${AIRFLOW_UID}:0"
   depends_on:
@@ -61,7 +62,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_DATABASE_AIRFLOW},${POSTGRES_DATABASE_GRAFANA},${POSTGRES_DATABASE_MLFLOW}
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "airflow"]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
       interval: 5s
       retries: 5
     restart: always
@@ -227,6 +228,8 @@ services:
       - '${MLFLOW_PORT}:5000'
     volumes: 
       - ./mlruns:/mlruns
+    environment:
+      - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
   ge_data_docs:
     image: flashspys/nginx-static
