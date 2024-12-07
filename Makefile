@@ -109,7 +109,7 @@ train:
 
 train_ml:
 	. $(FOLDER_PATH)/env/bin/activate; \
-	python3 src/usecase/train_model.py --ml-dataset-path /home/DATA/DetecTeppe-2022-04-08/ML_ready/ML/train/df_ml_train.csv  --ml-dataset-path-test /home/DATA/DetecTeppe-2022-04-08/ML_ready/ML/test/df_ml_test.csv 
+	python3 src/usecase/train_model.py --ml-dataset-path /home/DATA/DetecTeppe-2022-04-08/ml_dataset_2022_04_08/train/df_ml_train.csv  --ml-dataset-path-test /home/DATA/DetecTeppe-2022-04-08/ml_dataset_2022_04_08/test/df_ml_test.csv 
 
 
 ## VISUALIZATION 
