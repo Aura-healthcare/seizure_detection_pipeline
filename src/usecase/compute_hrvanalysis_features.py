@@ -219,7 +219,7 @@ class compute_features:
 
         # Replaces outliers nan values with linear interpolation
         interpolated_rr_intervals = interpolate_nan_values(
-            rr_intervals=rr_intervals_without_outliers, interpolation_method="linear"
+            rr_intervals=rr_intervals_without_outliers, interpolation_method="linear", limit_direction="both"
         )
 
         # Removes ectopic beats from signal
