@@ -222,7 +222,7 @@ class compute_features:
 
         # Removes ectopic beats from signal
         nn_intervals_list = remove_ectopic_beats(
-            rr_intervals=interpolated_rr_intervals, method="malik", verbose=False
+            rr_intervals=interpolated_rr_intervals, method="malik", verbose=False, custom_removing_rule=0.5
         )
 
         # Replaces ectopic beats nan values with linear interpolation
@@ -389,7 +389,7 @@ def compute_hrvanalysis_features(
     # /data/1_1_1_rr_inteverals_wo_outliers
     sum_rrs = np.cumsum(rr_intervals)
     rr_intervals_without_outliers = remove_outliers(
-        rr_intervals=rr_intervals, low_rri=300, high_rri=1800, verbose=False
+        rr_intervals=rr_intervals, low_rri=300, high_rri=2000, verbose=False
     )
 
 
@@ -400,7 +400,7 @@ def compute_hrvanalysis_features(
     )
     original_filename = os.path.basename(rr_intervals_file_path)
     output_filename = original_filename
-    output_folder = '/data/1_1_1_rr_inteverals_wo_outliers'
+    output_folder = '/data/rr_interval_studies/1_1_1_rr_inteverals_wo_outliers'
     output_file_path = os.path.join(output_folder, output_filename)
     os.makedirs(output_folder, exist_ok=True)
     df_temp["filename"] = output_file_path
@@ -421,7 +421,7 @@ def compute_hrvanalysis_features(
     )
     original_filename = os.path.basename(rr_intervals_file_path)
     output_filename = original_filename
-    output_folder = '/data/1_1_2_rr_inteverals_wo_outliers_extrapolated'
+    output_folder = '/data/rr_interval_studies/1_1_2_rr_inteverals_wo_outliers_extrapolated'
     output_file_path = os.path.join(output_folder, output_filename)
     os.makedirs(output_folder, exist_ok=True)
     df_temp["filename"] = output_file_path
@@ -433,7 +433,7 @@ def compute_hrvanalysis_features(
     # Removes ectopic beats from signal
     sum_rrs = np.cumsum(rr_intervals)
     nn_intervals_list = remove_ectopic_beats(
-        rr_intervals=rr_intervals, method="malik", verbose=False
+        rr_intervals=rr_intervals, method="malik", verbose=False, custom_removing_rule=0.5
     )
 
     df_temp = pd.DataFrame(nn_intervals_list, columns=['rr_intervals'])
@@ -443,7 +443,7 @@ def compute_hrvanalysis_features(
     )
     original_filename = os.path.basename(rr_intervals_file_path)
     output_filename = original_filename
-    output_folder = '/data/1_2_1_rr_inteverals_malik'
+    output_folder = '/data/rr_interval_studies/1_2_1_rr_inteverals_malik'
     output_file_path = os.path.join(output_folder, output_filename)
     os.makedirs(output_folder, exist_ok=True)
     df_temp["filename"] = output_file_path
@@ -464,7 +464,7 @@ def compute_hrvanalysis_features(
     )
     original_filename = os.path.basename(rr_intervals_file_path)
     output_filename = original_filename
-    output_folder = '/data/1_2_2_rr_inteverals_malik_extrapolated'
+    output_folder = '/data/rr_interval_studies/1_2_2_rr_inteverals_malik_extrapolated'
     output_file_path = os.path.join(output_folder, output_filename)
     os.makedirs(output_folder, exist_ok=True)
     df_temp["filename"] = output_file_path
@@ -474,7 +474,7 @@ def compute_hrvanalysis_features(
 
 
     wo_outliers_and_malik = remove_ectopic_beats(
-        rr_intervals=rr_intervals_without_outliers, method="malik", verbose=False
+        rr_intervals=rr_intervals_without_outliers, method="malik", verbose=False, custom_removing_rule=0.5
     )
     sum_rrs = np.cumsum(rr_intervals)
 
@@ -485,7 +485,7 @@ def compute_hrvanalysis_features(
     )
     original_filename = os.path.basename(rr_intervals_file_path)
     output_filename = original_filename
-    output_folder = '/data/1_3_1_rr_inteverals_wo_outliers_and_malik_extrapolated'
+    output_folder = '/data/rr_interval_studies/1_3_1_rr_inteverals_wo_outliers_and_malik_extrapolated'
     output_file_path = os.path.join(output_folder, output_filename)
     os.makedirs(output_folder, exist_ok=True)
     df_temp["filename"] = output_file_path
