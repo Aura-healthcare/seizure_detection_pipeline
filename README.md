@@ -9,7 +9,7 @@ Ce dossier contient une CLI pour enchainer automatiquement:
 ## Structure
 
 ```text
-script/
+.
 ├── main.py
 └── sources/
     ├── fast.py
@@ -21,23 +21,36 @@ script/
 - `sources/hamilton.py`: detecteur alternatif base sur `scipy.signal.find_peaks`.
 - `sources/features.py`: wrapper vers `compute_hrvanalysis_features` du dossier `seizure_detection_pipeline`.
 
+## Prérequis / installation
+
+Depuis la racine du projet:
+
+```bash
+python3 -m venv venv
+venv/bin/pip install numpy pandas scipy pyedflib
+```
+
+Toutes les commandes ci-dessous utilisent `venv/bin/python` — activez le venv (`source venv/bin/activate`) si vous préférez utiliser `python3` directement.
+
+**Important** : le calcul des features HRV (`compute_hrvanalysis_features`, via `sources/features.py`) dépend d'un module `seizure_detection_pipeline` situé en dehors de ce dépôt (`/pipeline-scripts/processing/ecg-to-rr-intervals/pan-tompkins/seizure_detection_pipeline`). Sans accès à ce chemin, seule la détection QRS → RR fonctionnera ; utilisez `--skip-features` (voir plus bas) pour vous arrêter avant le calcul des features.
+
 ## Commande principale
 
 Depuis la racine du projet:
 
 ```bash
-env_jc/bin/python script/main.py --algo fast --file chemin/vers/ecg.csv
+venv/bin/python main.py --algo fast --file example_samples/sub-001_ses-001_run-01_sample100000.csv
 ```
 
 Ou avec le detecteur alternatif:
 
 ```bash
-env_jc/bin/python script/main.py --algo hamilton --file chemin/vers/ecg.csv
+venv/bin/python main.py --algo hamilton --file example_samples/sub-001_ses-001_run-01_sample100000.csv
 ```
 
 Par defaut, le script suppose:
 
-- frequence ECG: `250 Hz`;
+- frequence ECG: `256 Hz`;
 - colonne temps: `time`, `timestamp`, `datetime` ou `date`;
 - colonne ECG: `ecgpoint`, `ecg`, `signal`, `value`, ou l'unique colonne numerique disponible;
 - sorties dans `script_output/`.
@@ -45,10 +58,10 @@ Par defaut, le script suppose:
 ## Options utiles
 
 ```bash
-env_jc/bin/python script/main.py \
+venv/bin/python main.py \
   --algo fast \
-  --file chemin/vers/ecg.csv \
-  --fs 250 \
+  --file example_samples/sub-001_ses-001_run-01_sample100000.csv \
+  --fs 256 \
   --time-column time \
   --signal-column ecgpoint \
   --output-dir script_output
@@ -57,16 +70,16 @@ env_jc/bin/python script/main.py \
 Pour seulement produire les RR sans calculer les features:
 
 ```bash
-env_jc/bin/python script/main.py --algo fast --file chemin/vers/ecg.csv --skip-features
+venv/bin/python main.py --algo fast --file example_samples/sub-001_ses-001_run-01_sample100000.csv --skip-features
 ```
 
 Pour calculer les features depuis un fichier RR deja existant:
 
 ```bash
-env_jc/bin/python script/main.py \
+venv/bin/python main.py \
   --algo fast \
-  --file chemin/vers/ecg.csv \
-  --rr-file output/rr_intervals_patient_05_V1_JC.csv
+  --file example_samples/sub-001_ses-001_run-01_sample100000.csv \
+  --rr-file script_output/sub-001_ses-001_run-01_sample100000/fast/rr_sub-001_ses-001_run-01_sample100000_fast.csv
 ```
 
 ## Sorties
@@ -101,27 +114,27 @@ timestamp                      ecg
 ## Commande
 
 ```bash
-python edf_to_features.py --file chemin/vers/ecg.edf
+venv/bin/python edf_to_features.py --file example_samples/sub-001_ses-001_run-01_sample100000.edf
 ```
 
 ```bash
-python edf_to_features.py --file chemin/vers/ecg.csv
+venv/bin/python edf_to_features.py --file example_samples/sub-001_ses-001_run-01_sample100000.csv
 ```
 
 Avec les options utiles (EDF) :
 
 ```bash
-python edf_to_features.py \
-  --file chemin/vers/ecg.edf \
+venv/bin/python edf_to_features.py \
+  --file example_samples/sub-001_ses-001_run-01_sample100000.edf \
   --fs 256 \
   --channel 0 \
-  --output-dir script_output
+  --output-dir example_samples_output
 ```
 
 Pour ne produire que les RR sans calculer les features :
 
 ```bash
-python edf_to_features.py --file chemin/vers/ecg.edf --skip-features
+venv/bin/python edf_to_features.py --file example_samples/sub-001_ses-001_run-01_sample100000.edf --skip-features
 ```
 
 ## Options
@@ -153,16 +166,24 @@ script_output/ecg/fast/
 
 Script qui applique `edf_to_features.py` à tous les fichiers ECG (`.edf` **et** `.csv`) trouvés sous `*/ecg/*` pour une liste de patients, dans le dataset SeizeIT2.
 
+Le dataset SeizeIT2 (`ds005873`) est téléchargeable ici : https://openneuro.org/datasets/ds005873/versions/1.1.0
+
 ```bash
 ./run_all_edf.sh
 ```
 
-- `DATASET_ROOT` : racine du dataset (`/data2/datasets/seizeit2-dataset/ds005873-1.1.0` par défaut).
+Si vous avez téléchargé le dataset vous-même depuis OpenNeuro (voir lien ci-dessus), pointez vers votre dossier extrait avec `-d`/`--dataset-root` plutôt que d'éditer le script :
+
+```bash
+./run_all_edf.sh --dataset-root /chemin/vers/ds005873-1.1.0
+```
+
+- `DATASET_ROOT` : racine du dataset (`/data2/datasets/seizeit2-dataset/ds005873-1.1.0` par défaut, chemin interne ; surchargeable via `-d`/`--dataset-root`).
 - `PATIENTS` : liste des sous-dossiers `sub-XXX` à traiter (à éditer directement dans le script).
 - Les fichiers sont recherchés via `find "$DATASET_ROOT/$sub" -path "*/ecg/*.edf" -o -path "*/ecg/*.csv"`, triés, puis traités un par un avec `venv/bin/python edf_to_features.py --file ...`.
 - À la fin, un résumé du nombre de succès/échecs est affiché ; les erreurs individuelles sont loguées sur stderr sans interrompre le traitement des fichiers suivants.
 
-# NOTE : le dataset sous /data2/datasets/seizeit2-dataset/ds005873-1.1.0 ne contient actuellement que des .edf dans les dossiers ecg/ — le script est prêt à traiter des .csv s'ils apparaissent, mais ce cas n'a pas encore été testé sur des données réelles
+**NOTE** : le dataset sous /data2/datasets/seizeit2-dataset/ds005873-1.1.0 ne contient actuellement que des .edf dans les dossiers ecg/ — le script est prêt à traiter des .csv s'ils apparaissent, mais ce cas n'a pas encore été testé sur des données réelles
 
 ---
 
@@ -201,12 +222,12 @@ Compare les deux fichiers `feats_*.csv` (`edf_origin` vs `csv_origin`) pour vér
 - Signale toute différence de nombre de lignes/colonnes et affiche jusqu'à 10 divergences par colonne.
 
 ```bash
-python3 compare_feats.py
+venv/bin/python compare_feats.py
 ```
 
 Ou avec des fichiers spécifiques :
 
 ```bash
-python3 compare_feats.py chemin/vers/feats_edf.csv chemin/vers/feats_csv.csv
+venv/bin/python compare_feats.py example_samples_output/csv_origin/sub-001_ses-001_run-01_sample100000/fast/features/feats_sub-001_ses-001_run-01_sample100000_fast.csv example_samples_output/edf_origin/sub-001_ses-001_run-01_sample100000/fast/features/feats_sub-001_ses-001_run-01_sample100000_fast.csv
 ```
 

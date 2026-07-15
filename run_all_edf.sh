@@ -4,8 +4,35 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_PYTHON="$SCRIPT_DIR/venv/bin/python"
 DATASET_ROOT="/data2/datasets/seizeit2-dataset/ds005873-1.1.0"
-
 PATIENTS=("sub-024" "sub-025")
+
+usage() {
+    echo "Usage: $0 [-d|--dataset-root CHEMIN] [-p|--patients sub-001,sub-002,...]"
+    echo "  -d, --dataset-root  Racine du dataset SeizeIT2 (defaut: $DATASET_ROOT)"
+    echo "  -p, --patients      Liste de sous-dossiers sub-XXX separes par des virgules (defaut: ${PATIENTS[*]})"
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -d|--dataset-root)
+            DATASET_ROOT="$2"
+            shift 2
+            ;;
+        -p|--patients)
+            IFS=',' read -r -a PATIENTS <<< "$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Option inconnue : $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
 
 mapfile -t ecg_files < <(
     for sub in "${PATIENTS[@]}"; do
