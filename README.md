@@ -1,5 +1,13 @@
 # Script automatise QRS -> RR -> features
 
+## Dataset
+
+Ce projet travaille avec le dataset **SeizeIT2** (`ds005873`), téléchargeable ici : https://openneuro.org/datasets/ds005873/versions/1.1.0
+
+À citer comme suit :
+
+> Miguel Bhagubai, Christos Chatzichristos, Lauren Swinnen, Jaiver Macea, Jingwei Zhang, Lieven Lagae, Katrien Jansen, Andreas Schulze-Bonhage, Francisco Sales, Benno Mahler, Yvonne Weber, Wim Van Paesschen, and Maarten De Vos (2025). SeizeIT2. OpenNeuro. [Dataset] doi: doi:10.18112/openneuro.ds005873.v1.1.0
+
 Ce dossier contient une CLI pour enchainer automatiquement:
 
 1. detection des positions QRS;
@@ -166,20 +174,19 @@ script_output/ecg/fast/
 
 Script qui applique `edf_to_features.py` à tous les fichiers ECG (`.edf` **et** `.csv`) trouvés sous `*/ecg/*` pour une liste de patients, dans le dataset SeizeIT2.
 
-Le dataset SeizeIT2 (`ds005873`) est téléchargeable ici : https://openneuro.org/datasets/ds005873/versions/1.1.0
 
 ```bash
 ./run_all_edf.sh
 ```
 
-Si vous avez téléchargé le dataset vous-même depuis OpenNeuro (voir lien ci-dessus), pointez vers votre dossier extrait avec `-d`/`--dataset-root` plutôt que d'éditer le script :
+Si vous avez téléchargé le dataset vous-même depuis OpenNeuro (voir lien ci-dessus), pointez vers votre dossier extrait avec `-d`/`--dataset-root`, et choisissez les patients à traiter avec `-p`/`--patients` plutôt que d'éditer le script :
 
 ```bash
-./run_all_edf.sh --dataset-root /chemin/vers/ds005873-1.1.0
+./run_all_edf.sh --dataset-root /chemin/vers/ds005873-1.1.0 --patients sub-001,sub-002
 ```
 
 - `DATASET_ROOT` : racine du dataset (`/data2/datasets/seizeit2-dataset/ds005873-1.1.0` par défaut, chemin interne ; surchargeable via `-d`/`--dataset-root`).
-- `PATIENTS` : liste des sous-dossiers `sub-XXX` à traiter (à éditer directement dans le script).
+- `PATIENTS` : liste des sous-dossiers `sub-XXX` à traiter (`sub-024,sub-025` par défaut ; surchargeable via `-p`/`--patients`, valeurs séparées par des virgules).
 - Les fichiers sont recherchés via `find "$DATASET_ROOT/$sub" -path "*/ecg/*.edf" -o -path "*/ecg/*.csv"`, triés, puis traités un par un avec `venv/bin/python edf_to_features.py --file ...`.
 - À la fin, un résumé du nombre de succès/échecs est affiché ; les erreurs individuelles sont loguées sur stderr sans interrompre le traitement des fichiers suivants.
 
