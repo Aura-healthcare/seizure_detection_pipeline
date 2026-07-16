@@ -1,4 +1,4 @@
-from seizure_detection_pipeline.src.usecase.compute_hrvanalysis_features import (
+from src.usecase.compute_hrvanalysis_features import (
     compute_hrvanalysis_features,
 )
 

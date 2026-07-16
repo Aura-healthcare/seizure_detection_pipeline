@@ -12,21 +12,8 @@ import pyedflib # pour lire les fichiers EDF
 ########### CHEMIN DE REPERTOIRES ###########
 
 CURRENT_DIR = pathlib.Path(__file__).resolve().parent # reupère le repertoire courant du script
-PAN_TOMPKINS_DIR = pathlib.Path(
-    "/pipeline-scripts/processing/ecg-to-rr-intervals/pan-tompkins"
-) # chemin vers le repretoire des algos pan-tompkins 
-
-SEIZURE_DETECTION_PIPELINE_DIR = PAN_TOMPKINS_DIR / "seizure_detection_pipeline" 
-# sous repertoire du pipeline
-
-HRV_ANALYSIS_NA_DIR = SEIZURE_DETECTION_PIPELINE_DIR / "src" / "usecase" 
-# repertoire pour l'analyse de la variabilité de la fréquence cardiaque (HRV)
-
-
-############ AJOUT DES REPERTOIRES AU PATH ###########
-for p in [CURRENT_DIR, PAN_TOMPKINS_DIR, SEIZURE_DETECTION_PIPELINE_DIR, HRV_ANALYSIS_NA_DIR]:
-    if str(p) not in sys.path:
-        sys.path.insert(0, str(p))
+if str(CURRENT_DIR) not in sys.path:
+    sys.path.insert(0, str(CURRENT_DIR))
 # Ajoute ces répertoires au chemin Python pour que les imports fonctionnent
 
 # imports custom du projet

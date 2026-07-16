@@ -16,14 +16,6 @@ if str(CURRENT_DIR) not in sys.path:
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-PAN_TOMPKINS_DIR = pathlib.Path(
-    "/pipeline-scripts/processing/ecg-to-rr-intervals/pan-tompkins"
-)
-SEIZURE_DETECTION_PIPELINE_DIR = PAN_TOMPKINS_DIR / "seizure_detection_pipeline"
-HRV_ANALYSIS_NA_DIR = SEIZURE_DETECTION_PIPELINE_DIR / "src" / "usecase"
-for extra_path in (PAN_TOMPKINS_DIR, SEIZURE_DETECTION_PIPELINE_DIR, HRV_ANALYSIS_NA_DIR):
-    if str(extra_path) not in sys.path:
-        sys.path.insert(0, str(extra_path))
 
 from sources.features import compute_features
 from sources.fast import qrs_detector as fast_qrs_detector
