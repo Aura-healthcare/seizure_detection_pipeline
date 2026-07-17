@@ -27,3 +27,8 @@ dependencies = [
     "setuptools==83.0.0",
     "six==1.17.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
