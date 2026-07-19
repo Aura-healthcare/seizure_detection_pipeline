@@ -1,11 +1,10 @@
 """
-Tests pour edf_to_features.py.
+Tests for edf_to_features.py.
 
-Niveau 1 – non-régression : compare valeur à valeur les sorties avec des fichiers
-de référence committés dans tests/data/.
+Non-regression: compares outputs value-by-value against reference files committed
+in tests/data/ (rtol=1e-5, atol=1e-8, NaN handled correctly).
 
-Niveau 2 – smoke test : vérifie que les fichiers de sortie RR-interval et features
-sont non vides (plus d'une ligne de header).
+Smoke: verifies that the RR-interval and features output files exist and are non-empty.
 """
 import pathlib
 import subprocess
@@ -18,8 +17,8 @@ import pytest
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "edf_to_features.py"
 
-# Utilise toujours le Python du .venv pour que les dépendances projet soient disponibles,
-# peu importe quel python/pytest a été invoqué par l'utilisateur.
+# Always use the .venv Python so project dependencies are available regardless
+# of which python/pytest the user invoked.
 _venv_python = REPO_ROOT / ".venv" / "bin" / "python"
 PYTHON = str(_venv_python) if _venv_python.exists() else sys.executable
 
@@ -33,7 +32,7 @@ RTOL = 1e-5
 # ---------------------------------------------------------------------------
 
 def run_pipeline(edf_path: pathlib.Path, output_dir: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path]:
-    """Exécute edf_to_features.py et retourne (rr_path, hrv_path)."""
+    """Run edf_to_features.py and return (rr_path, hrv_path)."""
     result = subprocess.run(
         [PYTHON, str(SCRIPT), "--file", str(edf_path), "--output-dir", str(output_dir)],
         capture_output=True,
@@ -41,7 +40,7 @@ def run_pipeline(edf_path: pathlib.Path, output_dir: pathlib.Path) -> tuple[path
         cwd=str(REPO_ROOT),
     )
     assert result.returncode == 0, (
-        f"edf_to_features.py a échoué (exit {result.returncode}):\n"
+        f"edf_to_features.py failed (exit {result.returncode}):\n"
         f"--- stdout ---\n{result.stdout}\n--- stderr ---\n{result.stderr}"
     )
 
@@ -52,15 +51,15 @@ def run_pipeline(edf_path: pathlib.Path, output_dir: pathlib.Path) -> tuple[path
 
 
 def _compare_dataframes(actual: pd.DataFrame, expected: pd.DataFrame, label: str) -> None:
-    """Compare deux DataFrames valeur à valeur avec tolérance numérique."""
+    """Compare two DataFrames value-by-value with numeric tolerance."""
     assert actual.shape[0] == expected.shape[0], (
-        f"{label}: nombre de lignes différent "
+        f"{label}: row count mismatch "
         f"(actual={actual.shape[0]}, expected={expected.shape[0]})"
     )
 
     compare_cols = [c for c in expected.columns if c not in IGNORE_COLS and c in actual.columns]
     missing = [c for c in expected.columns if c not in IGNORE_COLS and c not in actual.columns]
-    assert not missing, f"{label}: colonnes manquantes dans la sortie : {missing}"
+    assert not missing, f"{label}: columns missing from output: {missing}"
 
     errors = []
     for col in compare_cols:
@@ -86,11 +85,11 @@ def _compare_dataframes(actual: pd.DataFrame, expected: pd.DataFrame, label: str
                 )
                 errors.append(f"  col '{col}': {mismatch.sum()} mismatch(es) — {details}")
 
-    assert not errors, f"{label}: différences détectées :\n" + "\n".join(errors)
+    assert not errors, f"{label}: differences found:\n" + "\n".join(errors)
 
 
 # ---------------------------------------------------------------------------
-# Fixture session : pipeline exécuté une seule fois pour tous les tests
+# Session fixture: pipeline runs once for all tests
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="session")
@@ -101,25 +100,25 @@ def pipeline_outputs(tmp_path_factory, sample_edf):
 
 
 # ---------------------------------------------------------------------------
-# Niveau 2 — Smoke tests
+# Smoke tests
 # ---------------------------------------------------------------------------
 
 class TestSmoke:
     def test_rr_file_exists_and_nonempty(self, pipeline_outputs):
         rr_path, _ = pipeline_outputs
-        assert rr_path.exists(), f"Fichier RR absent : {rr_path}"
+        assert rr_path.exists(), f"RR file missing: {rr_path}"
         df = pd.read_csv(rr_path)
-        assert len(df) > 0, "Le fichier RR ne contient aucune ligne de données"
+        assert len(df) > 0, "RR file contains no data rows"
 
     def test_hrv_file_exists_and_nonempty(self, pipeline_outputs):
         _, hrv_path = pipeline_outputs
-        assert hrv_path.exists(), f"Fichier features absent : {hrv_path}"
+        assert hrv_path.exists(), f"Features file missing: {hrv_path}"
         df = pd.read_csv(hrv_path)
-        assert len(df) > 0, "Le fichier features ne contient aucune ligne de données"
+        assert len(df) > 0, "Features file contains no data rows"
 
 
 # ---------------------------------------------------------------------------
-# Niveau 1 — Tests de non-régression
+# Non-regression tests
 # ---------------------------------------------------------------------------
 
 class TestNonRegression:

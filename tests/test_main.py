@@ -1,13 +1,13 @@
 """
-Tests pour main.py.
+Tests for main.py.
 
-Seul le chemin --rr-file est testé pour l'instant : le chemin de détection QRS
-depuis un CSV plante sur pandas 3.x (format timestamp incompatible).
+Only the --rr-file path is tested for now: the QRS detection path from a CSV
+fails on pandas 3.x due to an incompatible timestamp format in main.py:106.
 
-Niveau 1 – non-régression : compare les features produites avec le fichier de
-référence tests/data/reference-main-hrv.csv commité dans le repo.
+Non-regression: compares the produced features against the reference file
+tests/data/reference-main-hrv.csv committed in the repo.
 
-Niveau 2 – smoke test : vérifie que le fichier features produit est non vide.
+Smoke: verifies that the features output file exists and is non-empty.
 """
 import pathlib
 import subprocess
@@ -20,6 +20,8 @@ import pytest
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "main.py"
 
+# Always use the .venv Python so project dependencies are available regardless
+# of which python/pytest the user invoked.
 _venv_python = REPO_ROOT / ".venv" / "bin" / "python"
 PYTHON = str(_venv_python) if _venv_python.exists() else sys.executable
 
@@ -44,7 +46,7 @@ REFERENCE_HRV = REPO_ROOT / "tests" / "data" / "reference-main-hrv.csv"
 # ---------------------------------------------------------------------------
 
 def run_main_rr_file(output_dir: pathlib.Path) -> pathlib.Path:
-    """Exécute main.py avec --rr-file et retourne le chemin du fichier features."""
+    """Run main.py with --rr-file and return the path of the features file."""
     result = subprocess.run(
         [
             PYTHON, str(SCRIPT),
@@ -58,7 +60,7 @@ def run_main_rr_file(output_dir: pathlib.Path) -> pathlib.Path:
         cwd=str(REPO_ROOT),
     )
     assert result.returncode == 0, (
-        f"main.py a échoué (exit {result.returncode}):\n"
+        f"main.py failed (exit {result.returncode}):\n"
         f"--- stdout ---\n{result.stdout}\n--- stderr ---\n{result.stderr}"
     )
     stem = SAMPLE_CSV.stem
@@ -66,15 +68,15 @@ def run_main_rr_file(output_dir: pathlib.Path) -> pathlib.Path:
 
 
 def _compare_dataframes(actual: pd.DataFrame, expected: pd.DataFrame, label: str) -> None:
-    """Compare deux DataFrames valeur à valeur avec tolérance numérique."""
+    """Compare two DataFrames value-by-value with numeric tolerance."""
     assert actual.shape[0] == expected.shape[0], (
-        f"{label}: nombre de lignes différent "
+        f"{label}: row count mismatch "
         f"(actual={actual.shape[0]}, expected={expected.shape[0]})"
     )
 
     compare_cols = [c for c in expected.columns if c not in IGNORE_COLS and c in actual.columns]
     missing = [c for c in expected.columns if c not in IGNORE_COLS and c not in actual.columns]
-    assert not missing, f"{label}: colonnes manquantes dans la sortie : {missing}"
+    assert not missing, f"{label}: columns missing from output: {missing}"
 
     errors = []
     for col in compare_cols:
@@ -100,11 +102,11 @@ def _compare_dataframes(actual: pd.DataFrame, expected: pd.DataFrame, label: str
                 )
                 errors.append(f"  col '{col}': {mismatch.sum()} mismatch(es) — {details}")
 
-    assert not errors, f"{label}: différences détectées :\n" + "\n".join(errors)
+    assert not errors, f"{label}: differences found:\n" + "\n".join(errors)
 
 
 # ---------------------------------------------------------------------------
-# Fixture session
+# Session fixture
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="session")
@@ -114,18 +116,18 @@ def main_hrv_output(tmp_path_factory):
 
 
 # ---------------------------------------------------------------------------
-# Niveau 2 — Smoke test
+# Smoke tests
 # ---------------------------------------------------------------------------
 
 class TestSmoke:
     def test_hrv_file_exists_and_nonempty(self, main_hrv_output):
-        assert main_hrv_output.exists(), f"Fichier features absent : {main_hrv_output}"
+        assert main_hrv_output.exists(), f"Features file missing: {main_hrv_output}"
         df = pd.read_csv(main_hrv_output)
-        assert len(df) > 0, "Le fichier features ne contient aucune ligne de données"
+        assert len(df) > 0, "Features file contains no data rows"
 
 
 # ---------------------------------------------------------------------------
-# Niveau 1 — Test de non-régression
+# Non-regression tests
 # ---------------------------------------------------------------------------
 
 class TestNonRegression:
