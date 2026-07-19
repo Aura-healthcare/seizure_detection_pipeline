@@ -178,16 +178,16 @@ script_output/ecg/fast/
 uv run pytest
 ```
 
-Le pipeline est exécuté une seule fois par session sur `example_samples/sub-001_ses-001_run-01_sample100000.edf`. Les quatre tests vérifient :
+Le pipeline est exécuté une seule fois par session. Les six tests vérifient :
 
-| Test | Niveau | Ce qu'il vérifie |
-|---|---|---|
-| `TestSmoke::test_rr_file_exists_and_nonempty` | Smoke | fichier RR produit et non vide |
-| `TestSmoke::test_hrv_file_exists_and_nonempty` | Smoke | fichier features produit et non vide |
-| `TestNonRegression::test_rr_matches_reference` | Non-régression | valeurs RR identiques aux références (`rtol=1e-5`, `atol=1e-8`, NaN gérés) |
-| `TestNonRegression::test_hrv_matches_reference` | Non-régression | valeurs features identiques aux références |
-
-**Prérequis** : le serveur doit avoir accès à `/pipeline-scripts/processing/ecg-to-rr-intervals/pan-tompkins/seizure_detection_pipeline` (chemin utilisé par `sources/features.py`).
+| Fichier | Test | Type | Ce qu'il vérifie |
+|---|---|---|---|
+| `test_edf_to_features.py` | `TestSmoke::test_rr_file_exists_and_nonempty` | Smoke | fichier RR produit et non vide |
+| `test_edf_to_features.py` | `TestSmoke::test_hrv_file_exists_and_nonempty` | Smoke | fichier features produit et non vide |
+| `test_edf_to_features.py` | `TestNonRegression::test_rr_matches_reference` | Non-régression | valeurs RR identiques aux références (`rtol=1e-5`, `atol=1e-8`, NaN gérés) |
+| `test_edf_to_features.py` | `TestNonRegression::test_hrv_matches_reference` | Non-régression | valeurs features identiques aux références |
+| `test_main.py` | `TestSmoke::test_hrv_file_exists_and_nonempty` | Smoke | fichier features produit et non vide (`--rr-file`) |
+| `test_main.py` | `TestNonRegression::test_hrv_matches_reference` | Non-régression | valeurs features identiques aux références (`--rr-file`) |
 
 ## Régénérer les fichiers de référence
 
