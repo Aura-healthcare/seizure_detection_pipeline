@@ -170,6 +170,46 @@ script_output/ecg/fast/
 
 ---
 
+# Tests
+
+## Lancer les tests
+
+```bash
+uv run pytest
+```
+
+Le pipeline est exécuté une seule fois par session. Les six tests vérifient :
+
+| Fichier | Test | Type | Ce qu'il vérifie |
+|---|---|---|---|
+| `test_edf_to_features.py` | `TestSmoke::test_rr_file_exists_and_nonempty` | Smoke | fichier RR produit et non vide |
+| `test_edf_to_features.py` | `TestSmoke::test_hrv_file_exists_and_nonempty` | Smoke | fichier features produit et non vide |
+| `test_edf_to_features.py` | `TestNonRegression::test_rr_matches_reference` | Non-régression | valeurs RR identiques aux références (`rtol=1e-5`, `atol=1e-8`, NaN gérés) |
+| `test_edf_to_features.py` | `TestNonRegression::test_hrv_matches_reference` | Non-régression | valeurs features identiques aux références |
+| `test_main.py` | `TestSmoke::test_hrv_file_exists_and_nonempty` | Smoke | fichier features produit et non vide (`--rr-file`) |
+| `test_main.py` | `TestNonRegression::test_hrv_matches_reference` | Non-régression | valeurs features identiques aux références (`--rr-file`) |
+
+## Régénérer les fichiers de référence
+
+Si un changement numérique intentionnel a été apporté au pipeline, régénérez les fichiers de référence puis committez-les :
+
+```bash
+uv run python edf_to_features.py \
+  --file example_samples/sub-001_ses-001_run-01_sample100000.edf \
+  --output-dir /tmp/ref-output
+
+cp /tmp/ref-output/sub-001_ses-001_run-01_sample100000/fast/rr_sub-001_ses-001_run-01_sample100000_fast.csv \
+   tests/data/reference-rr-interval.csv
+
+cp /tmp/ref-output/sub-001_ses-001_run-01_sample100000/fast/features/feats_sub-001_ses-001_run-01_sample100000_fast.csv \
+   tests/data/reference-hrv.csv
+
+git add tests/data/reference-rr-interval.csv tests/data/reference-hrv.csv
+git commit -m "chore: update non-regression reference files"
+```
+
+---
+
 # Traitement en lot : `run_all_edf.sh`
 
 Script qui applique `edf_to_features.py` à tous les fichiers ECG (`.edf` **et** `.csv`) trouvés sous `*/ecg/*` pour une liste de patients, dans le dataset SeizeIT2.

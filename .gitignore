@@ -3,3 +3,5 @@ venv/
 __pycache__/
 *.pyc
 .env
+script_output/
+.pytest_cache/
