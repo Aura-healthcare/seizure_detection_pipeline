@@ -31,29 +31,37 @@ Ce dossier contient une CLI pour enchainer automatiquement:
 
 ## Prérequis / installation
 
+
+Si `uv` n'est pas installé :
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
 Depuis la racine du projet:
 
 ```bash
-python3 -m venv venv
-venv/bin/pip install numpy pandas scipy pyedflib
+uv sync
 ```
 
-Toutes les commandes ci-dessous utilisent `venv/bin/python` — activez le venv (`source venv/bin/activate`) si vous préférez utiliser `python3` directement.
+> Si `uv sync` échoue avec `No interpreter found for Python 3.13.14`, mettez à jour `uv` (`uv self update`) : les anciennes versions n'ont pas encore ce build dans leur registre de téléchargement.
 
-**Important** : le calcul des features HRV (`compute_hrvanalysis_features`, via `sources/features.py`) dépend d'un module `seizure_detection_pipeline` situé en dehors de ce dépôt (`/pipeline-scripts/processing/ecg-to-rr-intervals/pan-tompkins/seizure_detection_pipeline`). Sans accès à ce chemin, seule la détection QRS → RR fonctionnera ; utilisez `--skip-features` (voir plus bas) pour vous arrêter avant le calcul des features.
+Toutes les commandes ci-dessous utilisent `uv run python ...` ; vous pouvez aussi activer l'environnement (`source .venv/bin/activate`) puis utiliser `python3` directement.
+
+
 
 ## Commande principale
 
 Depuis la racine du projet:
 
 ```bash
-venv/bin/python main.py --algo fast --file example_samples/sub-001_ses-001_run-01_sample100000.csv
+uv run python main.py --algo fast --file example_samples/sub-001_ses-001_run-01_sample100000.csv
 ```
 
 Ou avec le detecteur alternatif:
 
 ```bash
-venv/bin/python main.py --algo hamilton --file example_samples/sub-001_ses-001_run-01_sample100000.csv
+uv run python main.py --algo hamilton --file example_samples/sub-001_ses-001_run-01_sample100000.csv
 ```
 
 Par defaut, le script suppose:
@@ -66,7 +74,7 @@ Par defaut, le script suppose:
 ## Options utiles
 
 ```bash
-venv/bin/python main.py \
+uv run python main.py \
   --algo fast \
   --file example_samples/sub-001_ses-001_run-01_sample100000.csv \
   --fs 256 \
@@ -78,13 +86,13 @@ venv/bin/python main.py \
 Pour seulement produire les RR sans calculer les features:
 
 ```bash
-venv/bin/python main.py --algo fast --file example_samples/sub-001_ses-001_run-01_sample100000.csv --skip-features
+uv run python main.py --algo fast --file example_samples/sub-001_ses-001_run-01_sample100000.csv --skip-features
 ```
 
 Pour calculer les features depuis un fichier RR deja existant:
 
 ```bash
-venv/bin/python main.py \
+uv run python main.py \
   --algo fast \
   --file example_samples/sub-001_ses-001_run-01_sample100000.csv \
   --rr-file script_output/sub-001_ses-001_run-01_sample100000/fast/rr_sub-001_ses-001_run-01_sample100000_fast.csv
@@ -122,17 +130,17 @@ timestamp                      ecg
 ## Commande
 
 ```bash
-venv/bin/python edf_to_features.py --file example_samples/sub-001_ses-001_run-01_sample100000.edf
+uv run python edf_to_features.py --file example_samples/sub-001_ses-001_run-01_sample100000.edf
 ```
 
 ```bash
-venv/bin/python edf_to_features.py --file example_samples/sub-001_ses-001_run-01_sample100000.csv
+uv run python edf_to_features.py --file example_samples/sub-001_ses-001_run-01_sample100000.csv
 ```
 
 Avec les options utiles (EDF) :
 
 ```bash
-venv/bin/python edf_to_features.py \
+uv run python edf_to_features.py \
   --file example_samples/sub-001_ses-001_run-01_sample100000.edf \
   --fs 256 \
   --channel 0 \
@@ -142,7 +150,7 @@ venv/bin/python edf_to_features.py \
 Pour ne produire que les RR sans calculer les features :
 
 ```bash
-venv/bin/python edf_to_features.py --file example_samples/sub-001_ses-001_run-01_sample100000.edf --skip-features
+uv run python edf_to_features.py --file example_samples/sub-001_ses-001_run-01_sample100000.edf --skip-features
 ```
 
 ## Options
@@ -227,7 +235,7 @@ Si vous avez téléchargé le dataset vous-même depuis OpenNeuro (voir lien ci-
 
 - `DATASET_ROOT` : racine du dataset (`/data2/datasets/seizeit2-dataset/ds005873-1.1.0` par défaut, chemin interne ; surchargeable via `-d`/`--dataset-root`).
 - `PATIENTS` : liste des sous-dossiers `sub-XXX` à traiter (`sub-024,sub-025` par défaut ; surchargeable via `-p`/`--patients`, valeurs séparées par des virgules).
-- Les fichiers sont recherchés via `find "$DATASET_ROOT/$sub" -path "*/ecg/*.edf" -o -path "*/ecg/*.csv"`, triés, puis traités un par un avec `venv/bin/python edf_to_features.py --file ...`.
+- Les fichiers sont recherchés via `find "$DATASET_ROOT/$sub" -path "*/ecg/*.edf" -o -path "*/ecg/*.csv"`, triés, puis traités un par un avec `uv run python edf_to_features.py --file ...`.
 - À la fin, un résumé du nombre de succès/échecs est affiché ; les erreurs individuelles sont loguées sur stderr sans interrompre le traitement des fichiers suivants.
 
 **NOTE** : le dataset sous /data2/datasets/seizeit2-dataset/ds005873-1.1.0 ne contient actuellement que des .edf dans les dossiers ecg/ — le script est prêt à traiter des .csv s'ils apparaissent, mais ce cas n'a pas encore été testé sur des données réelles
@@ -269,12 +277,12 @@ Compare les deux fichiers `feats_*.csv` (`edf_origin` vs `csv_origin`) pour vér
 - Signale toute différence de nombre de lignes/colonnes et affiche jusqu'à 10 divergences par colonne.
 
 ```bash
-venv/bin/python compare_feats.py
+uv run python compare_feats.py
 ```
 
 Ou avec des fichiers spécifiques :
 
 ```bash
-venv/bin/python compare_feats.py example_samples_output/csv_origin/sub-001_ses-001_run-01_sample100000/fast/features/feats_sub-001_ses-001_run-01_sample100000_fast.csv example_samples_output/edf_origin/sub-001_ses-001_run-01_sample100000/fast/features/feats_sub-001_ses-001_run-01_sample100000_fast.csv
+uv run python compare_feats.py example_samples_output/csv_origin/sub-001_ses-001_run-01_sample100000/fast/features/feats_sub-001_ses-001_run-01_sample100000_fast.csv example_samples_output/edf_origin/sub-001_ses-001_run-01_sample100000/fast/features/feats_sub-001_ses-001_run-01_sample100000_fast.csv
 ```
 

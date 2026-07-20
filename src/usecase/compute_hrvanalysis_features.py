@@ -124,7 +124,7 @@ class compute_features:
         self.features = np.empty(
             [self.n_short_intervals, len(self.features_key_to_index.keys())]
         )
-        self.features[:] = np.NaN
+        self.features[:] = np.nan
 
         # Computes hrv features and store them in variable "features"
         self.compute()
@@ -391,9 +391,9 @@ def compute_hrvanalysis_features(
         data=features_computer.features, columns=features_key_to_index
     )
 
+    start_timestamp = pd.to_datetime(start_timestamp, format="%Y-%m-%d_%H:%M:%S.%f%z")
     df_features["timestamp"] = df_features["interval_start_time"].apply(
-        lambda x: pd.Timestamp(start_timestamp, tz=None)
-        + pd.Timedelta(x, unit="milliseconds")
+        lambda x: start_timestamp + pd.Timedelta(x, unit="milliseconds")
     )
 
     # EXPORT
