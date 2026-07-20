@@ -95,9 +95,7 @@ def detect_chunk_qrs(
     min_segment_len: int,
 ) -> pd.Series:
     chunk = chunk[[time_column, signal_column]].copy()
-    chunk[time_column] = pd.to_datetime(
-        chunk[time_column], format="%Y-%m-%d_%H:%M:%S.%f%z"
-    )
+    chunk[time_column] = pd.to_datetime(chunk[time_column], utc=True)
     chunk[signal_column] = pd.to_numeric(chunk[signal_column], errors="coerce")
 
     if algo == "fast":
