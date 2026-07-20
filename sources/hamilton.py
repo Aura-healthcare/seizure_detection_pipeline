@@ -1,6 +1,5 @@
 import numpy as np
-from scipy.signal import find_peaks
+from ecgdetectors import Detectors
 
 def qrs_detector(signal: np.ndarray, freq_sampling: int) -> np.ndarray:
-    peaks, _ = find_peaks(signal, freq_sampling=freq_sampling)
-    return peaks
+    return np.array(Detectors(freq_sampling).hamilton_detector(signal))

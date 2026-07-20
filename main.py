@@ -107,12 +107,8 @@ def detect_chunk_qrs(
             min_segment_len=min_segment_len,
         )
 
-    return hamilton_qrs_detector(
-        chunk,
-        sampling_frequency,
-        time_column=time_column,
-        signal_column=signal_column,
-    )
+    peaks = hamilton_qrs_detector(chunk[signal_column].to_numpy(), sampling_frequency)
+    return chunk[time_column].iloc[peaks]
 
 
 def build_rr_dataframe(qrs_detections: list[pd.Series], sampling_frequency: int) -> pd.DataFrame:
