@@ -217,6 +217,12 @@ class compute_features:
             rr_intervals=rr_intervals, low_rri=300, high_rri=1800, verbose=False
         )
 
+        # If every value in the window was flagged as an outlier, there is no
+        # valid value left to interpolate from: interpolate_nan_values would
+        # raise an IndexError. Bail out with the all-nan array instead.
+        if np.all(np.isnan(rr_intervals_without_outliers)):
+            return np.array(rr_intervals_without_outliers)
+
         # Replaces outliers nan values with linear interpolation
         interpolated_rr_intervals = interpolate_nan_values(
             rr_intervals=rr_intervals_without_outliers, interpolation_method="linear"
@@ -226,6 +232,9 @@ class compute_features:
         nn_intervals_list = remove_ectopic_beats(
             rr_intervals=interpolated_rr_intervals, method="malik", verbose=False
         )
+
+        if np.all(np.isnan(nn_intervals_list)):
+            return np.array(nn_intervals_list)
 
         # Replaces ectopic beats nan values with linear interpolation
         interpolated_nn_intervals = interpolate_nan_values(
