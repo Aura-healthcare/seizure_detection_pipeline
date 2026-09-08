@@ -1,6 +1,6 @@
 # features_merge_scripts
 
-Scripts de préparation des features SeizeIT : découpage des annotations de crises par patient, fusion des features HRV/ACC sur une grille temporelle commune, puis concaténation de tous les patients en fichiers train/test unifiés.
+Scripts de préparation des features Detecteppe : découpage des annotations de crises par patient, fusion des features HRV/ACC sur une grille temporelle commune, puis concaténation de tous les patients en fichiers train/test unifiés.
 
 ## Prérequis
 
