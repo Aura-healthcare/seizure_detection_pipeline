@@ -5,3 +5,5 @@ __pycache__/
 .env
 script_output/
 .pytest_cache/
+**/checkpoints/
+*.pth
